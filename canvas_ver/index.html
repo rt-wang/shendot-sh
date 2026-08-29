@@ -1030,6 +1030,12 @@ const ENTRIES = [
    cta:"Open repo", href:"https://github.com/rt-wang/visual-drums", date:"2026-04-13",
    frag:"\"gesture-drum-sequencer\"\n\n\"@mediapipe/tasks-vision\"\n\"tone\": \"^15.0.4\"\n\"react\": \"^18.3.1\""},
 
+  {no:"A06", cat:"code", title:"canvas-catalog", year:"2026", format:"Repository · HTML",
+   blurb:"The template this page runs on: every work is a record sleeve on an infinite draggable plane. One static HTML file, one content file, no build step.",
+   rows:[["Language","HTML"],["Stars","0"],["Source","GitHub"]],
+   cta:"Open repo", href:"https://github.com/rt-wang/canvas-catalog", date:"2026-08-29",
+   frag:"<div class=\"node\">\n  translate3d(x, y, 0)\n  rotate(rot deg)\n</div>"},
+
   {no:"B01", cat:"music", title:"大四", year:"2026", format:"Project · 10 tracks",
    cover:"covers/da-si.jpg",
    rows:[["Tracks","10"],["Runtime","20:05"],["Hosted","untitled.stream"]],
@@ -1202,6 +1208,10 @@ function visible(i){
   return (activeCat === "all" || e.cat === activeCat) && inPeriod(e);
 }
 let tidyMode = false;
+/* Tidy is a way of LOOKING at the arrangement, not a new arrangement. The real
+   one waits here while the grid is on screen, so it is what gets saved and what
+   comes back when Tidy goes off. */
+let untidyLayout = null;
 
 /* the title block is a plane citizen too — draggable, and scatter avoids it */
 const TITLE_POS = { x: -520, y: -160 };
@@ -1312,6 +1322,12 @@ function loadLayout(){
         raw.layout = raw.layout.slice(0, ENTRIES.length);
         while(raw.layout.length < ENTRIES.length) raw.layout.push(rest[raw.layout.length]);
       }
+      /* A session saved while Tidy was on reopens as a grid forever, because the
+         grid went to storage as if it were the arrangement. Every other source
+         of a layout rotates its sleeves and tidyLayout() alone zeroes them, so
+         an all-zero rotation is that grid's signature: drop it back to the home
+         arrangement, keeping the headline and intro block where they were. */
+      if(raw.layout.length && raw.layout.every(o => o.rot === 0)) raw.layout = homeLayout();
       raw.head  = Array.isArray(raw.head) && raw.head.length === HOME_HEAD.length ? raw.head : null;
       raw.title = raw.title || null;
       return raw;
@@ -1324,7 +1340,7 @@ function loadLayout(){
 function saveLayout(){
   try{
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      layout: baseLayout || layout, topZ,
+      layout: untidyLayout || baseLayout || layout, topZ,
       head: headNodes.map(el => ({ ...el._pos, size: parseFloat(el.style.fontSize) || 132 })),
       title: { x: TITLE_POS.x, y: TITLE_POS.y }
     }));
@@ -1345,7 +1361,9 @@ function coverTitlePx(title){
 }
 
 function coverArt(e){
-  if(e.cat === "code")    return '<pre class="frag">' + e.frag + '</pre>';
+  /* a fragment is text, not markup: a snippet containing <div> has to READ as
+     a div, not silently become one */
+  if(e.cat === "code")    return '<pre class="frag">' + escText(e.frag) + '</pre>';
   if(e.cat === "music")   return e.cover
     ? '<img class="art" src="' + e.cover + '" alt="" decoding="async">'
     : '<div class="disc"><b></b></div>';
@@ -1741,6 +1759,10 @@ let gesture = null;                  // active single-pointer gesture
 const pointers = new Map();          // for pinch
 
 /* one accessor for "where does this node live on the plane" */
+function escText(t){
+  return String(t).replace(/[&<>]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;" }[c]));
+}
+
 function posOf(el){
   if(!el) return null;
   return el.dataset.kind === "entry" ? layout[+el.dataset.index] : el._pos;
@@ -1836,6 +1858,7 @@ function endGesture(ev){
   }else if(gesture.moved && gesture.node){
     if(gesture.index >= 0){
       tidyMode = false;
+      untidyLayout = null;      /* rearranging from the grid makes the grid yours */
       document.getElementById("btnTidy").setAttribute("aria-pressed", "false");
     }else{
       rebuildExclude();          // a moved word changes where a re-scatter may land
@@ -2596,6 +2619,7 @@ paintPeriod();
 
 function doScatter(){
   tidyMode = false;
+  untidyLayout = null;          /* this IS the new arrangement */
   document.getElementById("btnTidy").setAttribute("aria-pressed", "false");
   layout = scatterLayout(Date.now() % 100000);
   topZ = ENTRIES.length + 10;
@@ -2608,7 +2632,15 @@ function doScatter(){
 function doTidy(){
   tidyMode = !tidyMode;
   document.getElementById("btnTidy").setAttribute("aria-pressed", String(tidyMode));
-  layout = tidyMode ? tidyLayout() : scatterLayout(20260828);
+  if(tidyMode){
+    untidyLayout = layout.map(o => ({ ...o }));
+    layout = tidyLayout();
+  }else{
+    /* back to exactly what you had, not to a fresh scatter that throws away
+       every sleeve you placed by hand */
+    layout = untidyLayout || scatterLayout(20260828);
+    untidyLayout = null;
+  }
   nodes.forEach(el => el.style.transition = "transform .55s cubic-bezier(.2,.75,.2,1)");
   paintNodes();
   setTimeout(() => nodes.forEach(el => el.style.transition = ""), 600);
