@@ -3,6 +3,19 @@
 const fs = require("fs");
 const path = require("path");
 
+/* Kept in step with SOCIALS in canvas_ver/index.html — the catalog is a single
+   static file and the articles are generated, so the row is declared in both. */
+const SOCIALS = [
+  { label: "Music",     href: "https://linktr.ee/shendot" },
+  { label: "GitHub",    href: "https://github.com/rt-wang" },
+  { label: "Instagram", href: "https://www.instagram.com/shendottttt/" },
+  { label: "小红书",     href: "https://www.xiaohongshu.com/user/profile/5baf1950244c3800014fa026" },
+  { label: "抖音",       href: "https://www.douyin.com/user/MS4wLjABAAAAz9LK8Ejw_6Wdh_vzMRQ-drs7tcu3s9Xorx5Szx2OsFI" }
+];
+const SOCIAL_ROW = SOCIALS
+  .map(s => `<a href="${s.href}" target="_blank" rel="noopener">${s.label}</a>`)
+  .join('<i>·</i>');
+
 const ROOT = path.join(__dirname, "canvas_ver", "articles");
 const SRC = path.join(ROOT, "src");
 const MANIFEST = require("./articles.json");
@@ -139,6 +152,11 @@ footer{
   color:var(--ink-soft);
 }
 footer a{color:var(--blue);text-decoration:none;border-bottom:1px solid var(--blue);padding-bottom:2px}
+/* the ways out, sitting between the copyright and the way back */
+footer .social{display:flex;flex-wrap:wrap;align-items:center}
+footer .social a{color:var(--ink-soft);border-bottom-color:transparent}
+footer .social a:hover{color:var(--blue);border-bottom-color:var(--blue)}
+footer .social i{font-style:normal;color:var(--rule);padding:0 7px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -163,6 +181,7 @@ footer a{color:var(--blue);text-decoration:none;border-bottom:1px solid var(--bl
 
 <footer class="mono">
   <span>© ${a.date.slice(0,4)} Ruotian Wang</span>
+  <nav class="social">${SOCIAL_ROW}</nav>
   <a href="../index.html">Back to the catalog</a>
 </footer>
 

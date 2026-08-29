@@ -287,6 +287,12 @@ button{font:inherit;color:inherit}
 .titleblock .note b{font-weight:600}
 .titleblock .note a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent)}
 .titleblock .note a:hover{color:var(--accent-deep);border-color:var(--accent-deep)}
+/* The one row of ways out of the catalog. Quiet by default — it sits under the
+   intro, not over the work — and only takes the accent on hover. */
+.titleblock .social{margin:18px 0 0;color:var(--ink-soft)}
+.titleblock .social a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid transparent}
+.titleblock .social a:hover{color:var(--accent);border-color:var(--accent)}
+.titleblock .social i{font-style:normal;color:var(--rule);padding:0 7px}
 
 
 /* ══════════════ the period plug ══════════════ */
@@ -1426,16 +1432,32 @@ function sleeveHTML(e){
   '</div>';
 }
 
+/* Where to find him. The music platforms all live behind the one Linktree
+   rather than being listed out; the two Chinese platforms keep their own names.
+   Add a row here and it appears in the intro — the article footers carry the
+   same list, kept in build-articles.js. */
+const SOCIALS = [
+  { label: "Music",     href: "https://linktr.ee/shendot" },
+  { label: "GitHub",    href: "https://github.com/rt-wang" },
+  { label: "Instagram", href: "https://www.instagram.com/shendottttt/" },
+  { label: "小红书",     href: "https://www.xiaohongshu.com/user/profile/5baf1950244c3800014fa026" },
+  { label: "抖音",       href: "https://www.douyin.com/user/MS4wLjABAAAAz9LK8Ejw_6Wdh_vzMRQ-drs7tcu3s9Xorx5Szx2OsFI" }
+];
+
+const socialRow = SOCIALS
+  .map(s => '<a href="' + s.href + '" target="_blank" rel="noopener">' + s.label + '</a>')
+  .join("<i>·</i>");
+
 const titleNode = document.createElement("div");
 titleNode.className = "node titleblock";
 titleNode.dataset.kind = "title";
 titleNode.innerHTML =
   '<p class="eyebrow mono">Catalog 2021—2026 · San Jose, CA · drag anything</p>' +
   '<p class="note">Hi! I work as a software engineer in the Bay Area during the day, and create ' +
-  '<a href="https://linktr.ee/shendot" target="_blank" rel="noopener">weird art</a> the rest of ' +
-  'the time — music, hip-hop especially, and digital art. ' +
+  'weird art the rest of the time — music, hip-hop especially, and digital art. ' +
   '<b>Have a look at what I&rsquo;ve built.</b> Every entry is a sleeve on the front and notes on ' +
-  'the back. Drag anything; nothing is pinned to a grid.</p>';
+  'the back. Drag anything; nothing is pinned to a grid.</p>' +
+  '<p class="social mono">' + socialRow + '</p>';
 planeEl.appendChild(titleNode);
 titleNode._pos = TITLE_POS;
 
