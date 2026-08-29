@@ -803,29 +803,33 @@ button{font:inherit;color:inherit}
 }
 .deck--docked .deck__btn:hover{opacity:1;transform:scale(1.14)}
 
-/* Instead of a button sitting on a plate: bands along the top and bottom edges
-   that desaturate and darken the frame behind them on hover, with the x living
-   in the top one. Masked so they melt into the picture rather than ending on a
-   line. */
+/* Instead of a button sitting on a plate: neutral-grey bands washing the top and
+   bottom edges on hover, with the x living in the top one. They fade out into the
+   picture rather than ending on a line.
+
+   These are plain gradients on purpose. backdrop-filter: grayscale() over the
+   frame is the obvious way to do this and it makes Chrome stop painting the
+   cross-origin iframe entirely — the video vanishes and you see the page behind
+   it. Same family as transform: scale() blanking these frames. */
 .deck__scrim{display:none}
 .deck--docked .deck__scrim{
   display:block;
   position:absolute;left:0;right:0;z-index:1;pointer-events:none;
   opacity:0;transition:opacity .2s ease;
-  backdrop-filter:grayscale(1) brightness(.6);
-  -webkit-backdrop-filter:grayscale(1) brightness(.6);
 }
 .deck--docked .deck__scrim--top{
-  top:0;height:46px;border-radius:12px 12px 0 0;
-  background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,0));
-  -webkit-mask-image:linear-gradient(180deg,#000 52%,transparent);
-  mask-image:linear-gradient(180deg,#000 52%,transparent);
+  top:0;height:58px;border-radius:12px 12px 0 0;
+  background:linear-gradient(180deg,
+    rgba(28,29,32,.82) 0%,
+    rgba(28,29,32,.44) 52%,
+    rgba(28,29,32,0) 100%);
 }
 .deck--docked .deck__scrim--bot{
-  bottom:0;height:34px;border-radius:0 0 12px 12px;
-  background:linear-gradient(0deg,rgba(0,0,0,.3),rgba(0,0,0,0));
-  -webkit-mask-image:linear-gradient(0deg,#000 46%,transparent);
-  mask-image:linear-gradient(0deg,#000 46%,transparent);
+  bottom:0;height:42px;border-radius:0 0 12px 12px;
+  background:linear-gradient(0deg,
+    rgba(28,29,32,.72) 0%,
+    rgba(28,29,32,.32) 55%,
+    rgba(28,29,32,0) 100%);
 }
 .deck--docked:hover .deck__scrim,
 .deck--docked:focus-within .deck__scrim{opacity:1}
