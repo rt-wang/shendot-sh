@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruotian Wang — Catalog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#DAD9D4;
+  --paper:#EFEEEA;
+  --ash:#C6C5BF;
+  --ink:#131519;
+  --ink-soft:#6E6F6A;
+  --rule:#B9B8B2;
+  --blue:#2320E8;
+  --blue-deep:#1512A0;
+
+  /* dark surface for the listening station — sits under the embed's own card */
+  --panel:#17181B;
+  --panel-line:#2E3035;
+  --panel-text:#E8E7E3;
+  --panel-soft:#95958F;
+  --blue-lift:#7C7AFF;
+
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Newsreader",Georgia,"Times New Roman",serif;
+  --mono:"Space Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  --gutter:clamp(18px,4vw,56px);
+  --rail:86px;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--page);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:17px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:calc(var(--rail) + 24px);
+}
+a{color:inherit}
+
+.mono{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:16px;
+  padding:18px var(--gutter);
+  border-bottom:1px solid var(--rule);
+}
+.topbar__name{
+  font-family:var(--display);
+  font-variation-settings:"wdth" 118,"wght" 800;
+  font-size:14px;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+}
+.topbar__nav{display:flex;gap:18px}
+.topbar__nav a{text-decoration:none;color:var(--ink-soft)}
+.topbar__nav a:hover{color:var(--blue)}
+
+/* ---------- hero ---------- */
+.hero{
+  padding:clamp(40px,9vw,110px) var(--gutter) clamp(32px,5vw,60px);
+  border-bottom:1px solid var(--rule);
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,340px);
+  gap:clamp(24px,5vw,64px);
+  align-items:end;
+}
+.hero__eyebrow{color:var(--ink-soft);margin-bottom:clamp(20px,3vw,34px)}
+.hero__title{
+  margin:0;
+  font-family:var(--display);
+  font-variation-settings:"wdth" 122,"wght" 850;
+  font-size:clamp(40px,9.4vw,124px);
+  line-height:.86;
+  letter-spacing:-.02em;
+  text-transform:uppercase;
+}
+.hero__title em{
+  font-style:normal;
+  color:var(--blue);
+}
+.hero__note{
+  margin:0;
+  font-size:clamp(15px,1.5vw,18px);
+  line-height:1.45;
+  color:var(--ink);
+  max-width:38ch;
+}
+.hero__note b{font-weight:600}
+
+/* ---------- crate ---------- */
+.crate{
+  padding:clamp(28px,4vw,48px) var(--gutter) 40px;
+}
+.crate__head{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  color:var(--ink-soft);
+  padding-bottom:14px;
+  border-bottom:1px solid var(--rule);
+  margin-bottom:clamp(22px,3vw,36px);
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(16px,2.4vw,34px) clamp(14px,2vw,28px);
+}
+@media(max-width:1100px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.entry{opacity:0;animation:rise .55s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.entry.is-hidden{display:none}
+
+/* ---------- the sleeve ---------- */
+.sleeve{
+  all:unset;
+  display:block;
+  width:100%;
+  aspect-ratio:1/1;
+  perspective:1400px;
+  cursor:pointer;
+}
+.sleeve:focus-visible{outline:2px solid var(--blue);outline-offset:4px}
+.sleeve__inner{
+  position:relative;
+  width:100%;
+  height:100%;
+  transform-style:preserve-3d;
+  transition:transform .62s cubic-bezier(.2,.75,.2,1),translate .25s ease,box-shadow .25s ease;
+  box-shadow:0 1px 0 rgba(19,21,25,.16);
+}
+.sleeve:hover .sleeve__inner{translate:0 -4px;box-shadow:0 10px 22px rgba(19,21,25,.16)}
+.sleeve.is-flipped .sleeve__inner{transform:rotateY(180deg)}
+
+.face{
+  position:absolute;
+  inset:0;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.face--back{
+  transform:rotateY(180deg);
+  background:var(--paper);
+  border:1px solid var(--ink);
+  padding:clamp(12px,1.5vw,20px);
+  justify-content:space-between;
+}
+
+/* spine */
+.spine{
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:22px;
+  border-right:1px solid currentColor;
+  opacity:.5;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding-bottom:10px;
+}
+.spine span{
+  writing-mode:vertical-rl;
+  transform:rotate(180deg);
+  font-family:var(--mono);
+  font-size:9px;
+  letter-spacing:.18em;
+}
+
+/* front variants */
+.face--front{padding:clamp(12px,1.5vw,20px) clamp(12px,1.5vw,20px) clamp(12px,1.5vw,20px) 34px;justify-content:space-between}
+.face--code{background:var(--ink);color:var(--paper)}
+.face--music{background:var(--blue);color:var(--paper)}
+.face--video{background:var(--paper);color:var(--ink);border:1px solid var(--ink)}
+.face--writing{background:var(--paper);color:var(--ink);border:1px solid var(--ink)}
+.face--post{background:var(--ash);color:var(--ink);border:1px solid var(--ink)}
+
+.cover__no{font-family:var(--mono);font-size:11px;letter-spacing:.12em;opacity:.75}
+.cover__title{
+  font-family:var(--display);
+  font-variation-settings:"wdth" 112,"wght" 800;
+  font-size:clamp(17px,2.2vw,27px);
+  line-height:.95;
+  letter-spacing:-.01em;
+  text-transform:uppercase;
+  margin:0;
+}
+.cover__foot{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+
+/* code cover: terminal fragment */
+.frag{
+  font-family:var(--mono);
+  font-size:clamp(9px,1vw,11px);
+  line-height:1.7;
+  opacity:.62;
+  white-space:pre;
+  overflow:hidden;
+}
+/* music cover: record label */
+.disc{
+  align-self:center;
+  width:46%;
+  aspect-ratio:1;
+  border-radius:50%;
+  border:1px solid currentColor;
+  display:grid;
+  place-items:center;
+  position:relative;
+}
+.disc::before,.disc::after{
+  content:"";position:absolute;border-radius:50%;border:1px solid currentColor;opacity:.45;
+}
+.disc::before{inset:9%}
+.disc::after{inset:20%}
+.disc b{
+  width:12%;aspect-ratio:1;border-radius:50%;
+  background:currentColor;position:relative;z-index:1;
+}
+/* video cover: timecode + bars */
+.frame{
+  flex:1;
+  margin:10px 0;
+  border-top:9px solid var(--ink);
+  border-bottom:9px solid var(--ink);
+  display:grid;
+  place-items:center;
+}
+.frame svg{width:34px;height:34px}
+/* writing cover: pull quote */
+.pull{
+  font-family:var(--body);
+  font-size:clamp(14px,1.55vw,19px);
+  line-height:1.28;
+  margin:0;
+  max-width:22ch;
+}
+.pull span{color:var(--blue)}
+/* post cover */
+.postmark{
+  font-family:var(--display);
+  font-variation-settings:"wdth" 62,"wght" 900;
+  font-size:clamp(48px,7vw,84px);
+  line-height:.7;
+  color:var(--blue);
+}
+
+/* back of sleeve — liner notes */
+.liner__top{display:flex;justify-content:space-between;color:var(--ink-soft)}
+.liner__title{
+  font-family:var(--display);
+  font-variation-settings:"wdth" 100,"wght" 750;
+  font-size:clamp(15px,1.7vw,20px);
+  line-height:1.05;
+  text-transform:uppercase;
+  margin:14px 0 8px;
+}
+.liner__body{
+  font-size:clamp(12.5px,1.15vw,15px);
+  line-height:1.35;
+  margin:0;
+  color:#2A2C30;
+}
+.liner__rows{
+  margin:12px 0 0;
+  border-top:1px solid var(--rule);
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+}
+.liner__row{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--rule)}
+.liner__row b{color:var(--ink);font-weight:400}
+.liner__cta{
+  margin-top:12px;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--blue);
+  text-decoration:none;
+  border-bottom:1px solid var(--blue);
+  padding-bottom:2px;
+}
+.liner__cta:hover{color:var(--blue-deep);border-color:var(--blue-deep)}
+.liner__scroll{overflow:auto;flex:1;min-height:0}
+
+/* caption under sleeve */
+.caption{padding-top:11px}
+.caption__title{
+  font-family:var(--body);
+  font-size:clamp(14px,1.25vw,17px);
+  line-height:1.2;
+  margin:0 0 4px;
+}
+.caption__meta{color:var(--ink-soft);font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+
+/* ---------- bottom rail ---------- */
+.rail{
+  position:fixed;
+  left:0;right:0;bottom:0;
+  z-index:20;
+  background:rgba(218,217,212,.94);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  padding:0 14px 12px;
+}
+.rail__row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:9px clamp(11px,1.6vw,22px);
+}
+.rail__row--nav{margin-top:9px}
+
+.chip,.tab{
+  appearance:none;
+  -webkit-appearance:none;
+  flex:1 1 92px;
+  min-width:84px;
+  margin:0;
+  padding:7px 0 0;
+  background:none;
+  border:0;
+  border-top:1px solid var(--rule);
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:8px;
+  cursor:pointer;
+  text-align:left;
+  text-decoration:none;
+  color:var(--ink);
+  font-family:var(--display);
+  font-variation-settings:"wdth" 100,"wght" 700;
+  font-size:clamp(10.5px,.85vw,12.5px);
+  line-height:1.15;
+  letter-spacing:-.005em;
+  transition:border-color .15s ease,color .15s ease;
+}
+.chip:hover,.tab:hover{border-top-color:var(--ink)}
+.chip:focus-visible,.tab:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.chip[aria-pressed="true"]{
+  border-top:2px solid var(--ink);
+  padding-top:6px;
+}
+.chip .count{
+  font-variation-settings:"wdth" 100,"wght" 500;
+  font-size:clamp(8.5px,.65vw,9.5px);
+  line-height:1;
+  margin-top:1px;
+  flex:none;
+}
+.chip[disabled]{cursor:not-allowed;color:var(--ink-soft)}
+.chip[disabled]:hover{border-top-color:var(--rule)}
+
+footer{
+  padding:8px var(--gutter) 30px;
+  color:var(--ink-soft);
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  border-top:1px solid var(--rule);
+  margin:0 0 0;
+}
+
+/* ---------- listening station ---------- */
+body.is-locked{overflow:hidden}
+.station{position:fixed;inset:0;z-index:60;display:none}
+.station.is-open{display:block}
+.station__scrim{position:absolute;inset:0;background:rgba(10,11,13,.72)}
+.station__panel{
+  position:absolute;
+  left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  width:min(620px,calc(100vw - 28px));
+  max-height:min(86vh,760px);
+  overflow:auto;
+  background:var(--panel);
+  color:var(--panel-text);
+  border:1px solid var(--panel-line);
+  border-radius:22px;
+  padding:clamp(18px,2.4vw,26px);
+  box-shadow:0 30px 80px rgba(10,11,13,.55);
+}
+.station__top{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:12px;
+  color:var(--panel-soft);
+}
+.station__close{
+  all:unset;
+  cursor:pointer;
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--panel-soft);
+}
+.station__close:hover{color:var(--panel-text)}
+.station__close:focus-visible{outline:2px solid var(--blue-lift);outline-offset:3px}
+.station__title{
+  margin:14px 0 5px;
+  font-family:var(--display);
+  font-variation-settings:"wdth" 108,"wght" 800;
+  font-size:clamp(22px,3.4vw,36px);
+  line-height:.98;
+  letter-spacing:-.01em;
+  text-transform:uppercase;
+  color:var(--panel-text);
+}
+.station__meta{color:var(--panel-soft);margin-bottom:18px}
+
+/* the embed brings its own 24px card — echo it so the seam reads as inset, not clash */
+.station__media{margin:0 0 18px}
+.station__media iframe,
+.station__media video{display:block;width:100%;border:0;border-radius:24px}
+.station__media video{background:#000}
+.station__media audio{display:block;width:100%}
+
+.station__label{margin:20px 0 0;color:var(--panel-soft)}
+.station__body{margin:0;font-size:clamp(14px,1.2vw,16px);line-height:1.45;color:#C9C8C3}
+
+/* liner rows inherit the light-paper palette — repaint them for the dark panel */
+.station__panel .liner__rows{border-top-color:var(--panel-line);color:var(--panel-soft)}
+.station__panel .liner__row{border-bottom-color:var(--panel-line)}
+.station__panel .liner__row b{color:var(--panel-text)}
+.station__panel .liner__cta{color:var(--blue-lift);border-color:var(--blue-lift)}
+.station__panel .liner__cta:hover{color:#A5A3FF;border-color:#A5A3FF}
+
+button.liner__cta{
+  background:none;
+  border:0;
+  border-bottom:1px solid var(--blue);
+  cursor:pointer;
+}
+
+@media(max-width:820px){
+  .hero{grid-template-columns:1fr;align-items:start}
+  .chip,.tab{flex:1 1 40%;min-width:0;font-size:11px}
+  .rail__row--nav{margin-top:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .sleeve__inner{transition:none}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar__name">Ruotian Wang</div>
+  <div class="topbar__nav mono">Software engineer · Rapper</div>
+</header>
+
+<section class="hero">
+  <div>
+    <div class="hero__eyebrow mono">Catalog 2021—2026 · San Jose, CA</div>
+    <h1 class="hero__title">Code, records<br>&amp; <em>liner notes</em></h1>
+  </div>
+  <p class="hero__note">
+    I write ML infrastructure at ByteDance and make Chinese-language hip hop the rest of the time.
+    Repos, tracks, films and essays are all filed the same way here: <b>a sleeve on the front, notes on the back.</b>
+    Tap any sleeve to flip it. Filter the crate from the rail below.
+  </p>
+</section>
+
+<main class="crate" id="crate">
+  <div class="crate__head">
+    <span class="mono" id="crate-count">All entries</span>
+    <span class="mono">Sorted by year, newest first</span>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer class="mono">
+  <span>© 2026 Ruotian Wang</span>
+  <span>GitHub · X · Bilibili · Xiaohongshu</span>
+</footer>
+
+<nav class="rail" aria-label="Filter catalog">
+  <div class="rail__row rail__row--filters" id="rail"></div>
+  <div class="rail__row rail__row--nav">
+    <a class="tab" href="#crate">Home</a>
+    <a class="tab" href="#">List</a>
+    <a class="tab" href="#">Info</a>
+    <a class="tab" href="#">Contact</a>
+  </div>
+</nav>
+
+<div class="station" id="station" role="dialog" aria-modal="true" aria-labelledby="station-title" aria-hidden="true">
+  <div class="station__scrim" data-close></div>
+  <div class="station__panel" id="station-panel"></div>
+</div>
+
+<script>
+const ENTRIES = [
+  {no:"A01", cat:"code", title:"Ob Shell", year:"2026", format:"Open source · Rust + TS",
+   blurb:"A local-first mobile companion for Obsidian vaults. Reads your markdown off the device, no sync server in the middle.",
+   rows:[["Role","Author"],["Stack","Rust, React Native"],["Status","Active"]],
+   cta:"Open repo", href:"https://github.com/rt-wang/ob-shell",
+   frag:"$ ob sync --local\n  vault  ~/notes\n  files  1,204\n  index  ok  38ms\n  → ready"},
+
+  {no:"A02", cat:"code", title:"Latent Canvas", year:"2026", format:"Local app · Anthropic SDK",
+   blurb:"A canvas for thinking with a model instead of chatting at one. Runs entirely on localhost.",
+   rows:[["Role","Author"],["Stack","TypeScript, SDK"],["Status","In progress"]],
+   cta:"Open repo", href:"#",
+   frag:"import { canvas } from './core'\n\nconst n = canvas.node({\n  kind: 'branch',\n  parent: root,\n})"},
+
+  {no:"A03", cat:"code", title:"Microservice Social", year:"2025", format:"Backend · 6 services",
+   blurb:"Feed, auth, media and notification services behind a gateway. Built to learn where distributed systems actually hurt.",
+   rows:[["Role","Author"],["Stack","Spring Boot, Redis"],["Status","Archived"]],
+   cta:"Open repo", href:"#",
+   frag:"gateway  ▸ 200 rps\nauth     ▸  ok\nfeed     ▸  ok\nmedia    ▸  ok\nnotify   ▸  ok"},
+
+  {no:"A04", cat:"code", title:"Pyxel Retro", year:"2024", format:"Game · Python",
+   blurb:"A small 2D game in Pyxel. Sixteen colors, one loop, no engine.",
+   rows:[["Role","Author"],["Stack","Python, Pyxel"],["Status","Done"]],
+   cta:"Play it", href:"#",
+   frag:"def update():\n    if btn(KEY_SPACE):\n        player.jump()\n    world.step()"},
+
+  {no:"B01", cat:"music", title:"大四", year:"2026", format:"Project · 10 tracks",
+   blurb:"Liner note goes here — replace this line.",
+   rows:[["Tracks","10"],["Runtime","20:05"],["Hosted","untitled.stream"]],
+   tracks:[["四年","3:15"],["santa fe","1:48"],["yellow skin","1:36"],["FFT","2:32"],["bread and butter","1:22"],["圣诞节 just verse mix one","3:24"],["一坨坨","2:45"],["1999","1:12"],["玻璃","1:12"],["Lake Michagan","0:56"]],
+   cta:"Play project", href:"https://untitled.stream/library/project/WQiCUlo6lzLfGC8azJvvv",
+   media:{type:"embed", src:"https://untitled.stream/embed/nTGmLelVqp0q", height:344}},
+
+  {no:"B02", cat:"music", title:"Yearning to Be 惟有创造", year:"2026", format:"Project · 9 tracks",
+   blurb:"Liner note goes here — replace this line.",
+   rows:[["Tracks","9"],["Runtime","16:01"],["Hosted","untitled.stream"]],
+   tracks:[["queen's gambit","1:15"],["sunset, too bright","2:08"],["自","1:36"],["back to you... [Interlude]","1:33"],["雨 (feat. 二流子）","2:15"],["written in fate","1:46"],["炙","1:39"],["解","2:05"],["absolutely devasted [Bonus]","1:39"]],
+   cta:"Play project", href:"https://untitled.stream/library/project/HhtYUQtGtULyeRbIC68OU",
+   media:{type:"embed", src:"https://untitled.stream/embed/gF709g3ZPU0U", height:344}},
+
+  {no:"B03", cat:"music", title:"san jo", year:"2026", format:"Project · 3 tracks",
+   blurb:"Liner note goes here — replace this line.",
+   rows:[["Tracks","3"],["Runtime","4:21"],["Hosted","untitled.stream"]],
+   tracks:[["孙学","1:05"],["黑玫瑰","1:46"],["周一","1:30"]],
+   cta:"Play project", href:"https://untitled.stream/library/project/5C7X5OdSv7exRBySlCUGQ",
+   media:{type:"embed", src:"https://untitled.stream/embed/6EP3EYU7u5Yg", height:344}},
+
+  {no:"B04", cat:"music", title:"untitled tape.", year:"2025", format:"Project · 10 tracks",
+   blurb:"Liner note goes here — replace this line.",
+   rows:[["Tracks","10"],["Runtime","21:25"],["Hosted","untitled.stream"]],
+   tracks:[["INTRO","0:20"],["INDEPENDENT","1:54"],["ICE","2:08"],["POLAROID","2:06"],["HYD","1:47"],["NUKE","1:57"],["FREESTYLE","3:08"],["FROLICK","3:13"],["'LONE","2:21"],["WAVY : OUTRO","2:26"]],
+   cta:"Play project", href:"https://untitled.stream/library/project/0IvqgIIwmDo8w3AVRqgcV",
+   media:{type:"embed", src:"https://untitled.stream/embed/nhT7QPuxr5sT", height:344}},
+
+  {no:"B05", cat:"music", title:"words, jumbles, rumbles.", year:"2024", format:"Project · 3 tracks",
+   blurb:"Liner note goes here — replace this line.",
+   rows:[["Tracks","3"],["Runtime","5:02"],["Hosted","untitled.stream"]],
+   tracks:[["rapsidy,","1:29"],["raw sex,","1:45"],["will, and conquer.","1:47"]],
+   cta:"Play project", href:"https://untitled.stream/library/project/ctGNsoltqADGGjaxzdKBb",
+   media:{type:"embed", src:"https://untitled.stream/embed/e0NVqzij5wyP", height:344}},
+
+  {no:"C01", cat:"video", title:"Inside the Residual Stream", year:"2026", format:"Screencast · 14:02",
+   blurb:"Walking through what a transformer is actually carrying between layers, one hook at a time.",
+   rows:[["Role","Writer, editor"],["Runtime","14:02"],["Host","Self-hosted MP4"]],
+   cta:"Watch", href:"#", tc:"00:14:02",
+   media:{type:"video", src:"media/placeholder-film.mp4"}},
+
+  {no:"C02", cat:"video", title:"Making of Echo Test", year:"2025", format:"Studio film · 6:35",
+   blurb:"Booth footage, scratch takes, and the argument about the second verse.",
+   rows:[["Role","Subject, editor"],["Runtime","6:35"],["Host","Self-hosted HLS"]],
+   cta:"Watch", href:"#", tc:"00:06:35"},
+
+  {no:"D01", cat:"writing", title:"Reading Features, Not Weights", year:"2026", format:"Essay · 2,400 words",
+   blurb:"On why mechanistic interpretability keeps finding structure where the architecture promised none.",
+   rows:[["Format","Markdown"],["Length","2,400 words"],["Topic","Interpretability"]],
+   cta:"Read", href:"#", pull:"A feature is not a <span>place</span> in the network. It is a direction."},
+
+  {no:"D02", cat:"writing", title:"What Language Models Mean", year:"2026", format:"Essay · 3,100 words",
+   blurb:"Reference, use, and the old philosophy-of-language questions that got a new laboratory.",
+   rows:[["Format","Markdown"],["Length","3,100 words"],["Topic","Philosophy"]],
+   cta:"Read", href:"#", pull:"Meaning was never <span>inside</span> the word. Why expect it inside the vector?"},
+
+  {no:"D03", cat:"writing", title:"Notes on Training Infra", year:"2025", format:"Notes · ongoing",
+   blurb:"Running notes on schedulers, checkpoints, and where throughput actually goes.",
+   rows:[["Format","Markdown"],["Length","Ongoing"],["Topic","ML infra"]],
+   cta:"Read", href:"#", pull:"Most of a training run is <span>waiting</span>, correctly."},
+
+  {no:"E01", cat:"post", title:"Thread: Why LLMs Can't Jump", year:"2026", format:"Thread · 11 posts",
+   blurb:"A long reply to the embodiment argument, and where I think it smuggles in its conclusion.",
+   rows:[["Platform","X"],["Length","11 posts"],["Topic","AI, embodiment"]],
+   cta:"Read thread", href:"#"},
+
+  {no:"E02", cat:"post", title:"On Benchmarks", year:"2025", format:"Post",
+   blurb:"Short version: a benchmark is a claim about what counts, wearing a number as a disguise.",
+   rows:[["Platform","X"],["Length","1 post"],["Topic","Evaluation"]],
+   cta:"Read post", href:"#"}
+];
+
+const CATS = [
+  {id:"all",     label:"All"},
+  {id:"code",    label:"Code"},
+  {id:"music",   label:"Music"},
+  {id:"video",   label:"Video"},
+  {id:"writing", label:"Writing"},
+  {id:"post",    label:"Posts"},
+  {id:"merch",   label:"Merch", soon:true}
+];
+
+const CAT_NAME = {code:"Repository",music:"Recording",video:"Film",writing:"Essay",post:"Post"};
+
+function coverArt(e){
+  if(e.cat === "code")    return `<pre class="frag">${e.frag}</pre>`;
+  if(e.cat === "music")   return `<div class="disc"><b></b></div>`;
+  if(e.cat === "video")   return `<div class="frame"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>`;
+  if(e.cat === "writing") return `<p class="pull">${e.pull}</p>`;
+  return `<div class="postmark">&ldquo;</div>`;
+}
+
+function ctaHTML(e,i){
+  return e.media
+    ? `<button class="liner__cta" data-open="${i}">${e.cta} →</button>`
+    : `<a class="liner__cta" href="${e.href}" target="_blank" rel="noopener">${e.cta} →</a>`;
+}
+
+function sleeveHTML(e,i){
+  const rows = e.rows.map(r=>`<div class="liner__row"><span>${r[0]}</span><b>${r[1]}</b></div>`).join("");
+  return `
+  <article class="entry" data-cat="${e.cat}" style="animation-delay:${i*45}ms">
+    <div class="sleeve" role="button" tabindex="0" aria-pressed="false" aria-label="${e.title} — flip for liner notes">
+      <div class="sleeve__inner">
+        <div class="face face--front face--${e.cat}">
+          <div class="spine"><span>${e.no} · ${e.year}</span></div>
+          <div class="cover__no">${e.no}</div>
+          ${coverArt(e)}
+          <div>
+            <h3 class="cover__title">${e.title}</h3>
+            <div class="cover__foot">${e.cat === "video" ? e.tc : CAT_NAME[e.cat]}</div>
+          </div>
+        </div>
+        <div class="face face--back">
+          <div class="liner__scroll">
+            <div class="liner__top mono"><span>Liner notes</span><span>${e.no}</span></div>
+            <h3 class="liner__title">${e.title}</h3>
+            <p class="liner__body">${e.blurb}</p>
+            <div class="liner__rows">${rows}</div>
+          </div>
+          ${ctaHTML(e,i)}
+        </div>
+      </div>
+    </div>
+    <div class="caption">
+      <p class="caption__title">${e.title}</p>
+      <p class="caption__meta">${e.format} · ${e.year}</p>
+    </div>
+  </article>`;
+}
+
+const grid = document.getElementById("grid");
+grid.innerHTML = ENTRIES.map(sleeveHTML).join("");
+
+const rail = document.getElementById("rail");
+CATS.forEach(c=>{
+  const n = c.id === "all" ? ENTRIES.length : ENTRIES.filter(e=>e.cat===c.id).length;
+  const b = document.createElement("button");
+  b.className = "chip";
+  b.dataset.cat = c.id;
+  if(c.soon){ b.disabled = true; b.innerHTML = `<span>${c.label}</span><span class="count">[soon]</span>`; }
+  else {
+    b.setAttribute("aria-pressed", c.id === "all" ? "true" : "false");
+    b.innerHTML = `<span>${c.label}</span><span class="count">[${n}]</span>`;
+  }
+  rail.appendChild(b);
+});
+
+rail.addEventListener("click", ev=>{
+  const chip = ev.target.closest(".chip");
+  if(!chip || chip.disabled) return;
+  const cat = chip.dataset.cat;
+  rail.querySelectorAll(".chip:not([disabled])").forEach(c=>
+    c.setAttribute("aria-pressed", String(c === chip)));
+
+  let shown = 0;
+  grid.querySelectorAll(".entry").forEach(el=>{
+    const match = cat === "all" || el.dataset.cat === cat;
+    el.classList.toggle("is-hidden", !match);
+    if(match){
+      el.style.animation = "none";
+      void el.offsetWidth;
+      el.style.animation = `rise .5s cubic-bezier(.2,.7,.2,1) ${shown*38}ms forwards`;
+      shown++;
+    }
+    el.querySelector(".sleeve").setAttribute("aria-pressed","false");
+    el.querySelector(".sleeve").classList.remove("is-flipped");
+  });
+
+  const label = CATS.find(c=>c.id===cat).label;
+  document.getElementById("crate-count").textContent =
+    cat === "all" ? "All entries" : `${label} — ${shown} ${shown===1?"entry":"entries"}`;
+});
+
+function flip(s){
+  const open = s.classList.toggle("is-flipped");
+  s.setAttribute("aria-pressed", String(open));
+}
+
+grid.addEventListener("click", ev=>{
+  const trigger = ev.target.closest("[data-open]");
+  if(trigger){ openStation(Number(trigger.dataset.open), trigger); return; }
+  if(ev.target.closest(".liner__cta")) return;
+  const s = ev.target.closest(".sleeve");
+  if(s) flip(s);
+});
+
+// the sleeve is a div, so it needs its own keyboard activation
+grid.addEventListener("keydown", ev=>{
+  if(ev.target !== ev.target.closest(".sleeve")) return;
+  if(ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); flip(ev.target); }
+});
+
+/* ---------- listening station ---------- */
+const station = document.getElementById("station");
+const stationPanel = document.getElementById("station-panel");
+let lastFocus = null;
+
+function mediaHTML(m){
+  if(m.type === "embed")
+    return `<iframe src="${m.src}" height="${m.height || 192}" allow="picture-in-picture" allowfullscreen loading="lazy" title="Player"></iframe>`;
+  if(m.type === "video")
+    return `<video controls playsinline preload="metadata"${m.poster ? ` poster="${m.poster}"` : ""} src="${m.src}"></video>`;
+  return `<audio controls preload="none" src="${m.src}"></audio>`;
+}
+
+function openStation(i, trigger){
+  const e = ENTRIES[i];
+  if(!e || !e.media) return;
+  lastFocus = trigger;
+  const rows = e.rows.map(r=>`<div class="liner__row"><span>${r[0]}</span><b>${r[1]}</b></div>`).join("");
+  stationPanel.innerHTML = `
+    <div class="station__top mono">
+      <span>${e.no} · ${CAT_NAME[e.cat]}</span>
+      <button class="station__close" data-close>Close ✕</button>
+    </div>
+    <h2 class="station__title" id="station-title">${e.title}</h2>
+    <div class="station__meta mono">${e.format} · ${e.year}</div>
+    <div class="station__media">${mediaHTML(e.media)}</div>
+    <p class="station__body">${e.blurb}</p>
+    <div class="liner__rows">${rows}</div>
+    ${e.tracks ? `<div class="station__label mono">Tracklist</div>
+    <div class="liner__rows">${e.tracks.map((t,n)=>
+      `<div class="liner__row"><span>${String(n+1).padStart(2,"0")} · ${t[0]}</span><b>${t[1]}</b></div>`
+    ).join("")}</div>` : ""}
+    ${e.href && e.href !== "#"
+      ? `<a class="liner__cta" href="${e.href}" target="_blank" rel="noopener">Open original →</a>`
+      : ""}`;
+  station.classList.add("is-open");
+  station.setAttribute("aria-hidden","false");
+  document.body.classList.add("is-locked");
+  stationPanel.scrollTop = 0;
+  stationPanel.querySelector(".station__close").focus();
+}
+
+function closeStation(){
+  if(!station.classList.contains("is-open")) return;
+  station.classList.remove("is-open");
+  station.setAttribute("aria-hidden","true");
+  document.body.classList.remove("is-locked");
+  stationPanel.innerHTML = "";        // tears down the iframe/video so playback stops
+  if(lastFocus) lastFocus.focus();
+  lastFocus = null;
+}
+
+station.addEventListener("click", ev=>{ if(ev.target.closest("[data-close]")) closeStation(); });
+document.addEventListener("keydown", ev=>{ if(ev.key === "Escape") closeStation(); });
+</script>
+</body>
+</html>

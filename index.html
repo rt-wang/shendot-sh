@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Shen | Work Index</title>
+    <meta
+      name="description"
+      content="A personal catalog for developer work, music, video, writing, and public notes."
+    >
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="preload" as="image" href="assets/covers/music.jpg">
+    <link rel="preload" as="image" href="assets/covers/developer-work.jpg">
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#catalog">Skip to catalog</a>
+
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Shen home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>shen.sh</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="#catalog">Catalog</a>
+        <a href="#articles">Writing</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="site-title">
+        <div class="album-zone">
+          <div class="sleeve-stack" aria-hidden="true">
+            <img class="stack-sleeve stack-sleeve-one" src="assets/covers/developer-work.jpg" alt="" loading="lazy" decoding="async">
+            <img class="stack-sleeve stack-sleeve-two" src="assets/covers/video.jpg" alt="" loading="lazy" decoding="async">
+            <img class="stack-sleeve stack-sleeve-three" src="assets/covers/articles.jpg" alt="" loading="lazy" decoding="async">
+          </div>
+
+          <button class="feature-cover" id="featureCover" type="button" aria-label="Show next featured category">
+            <img id="featureImage" src="assets/covers/music.jpg" alt="" fetchpriority="high">
+            <span class="cover-frame" aria-hidden="true"></span>
+            <span class="cover-label" id="featureCoverLabel">Music</span>
+          </button>
+        </div>
+
+        <div class="intro-panel">
+          <p class="eyebrow">Personal index / creative catalog</p>
+          <h1 id="site-title">Shen</h1>
+          <p class="lede">
+            Developer, musician, filmmaker, and writer. A home base for systems work,
+            releases, moving image, essays, and short public notes.
+          </p>
+
+          <div class="feature-copy" aria-live="polite">
+            <p class="feature-type" id="featureType">Featured / Music</p>
+            <h2 id="featureTitle">Music Releases</h2>
+            <p id="featureSummary">
+              Finished tracks, demos, mixes, and live sketches collected like a record shelf.
+            </p>
+          </div>
+
+          <div class="action-row">
+            <a class="btn btn-primary" id="featureAction" href="#catalog">Open Shelf</a>
+            <a class="btn" href="#contact">Contact</a>
+          </div>
+        </div>
+
+        <div class="hero-dock" aria-label="Featured categories">
+          <div>
+            <p class="dock-label">Genres</p>
+            <div class="button-row" id="heroFilters"></div>
+          </div>
+          <div class="dock-count">
+            <span id="featureCounter">01</span>
+            <span>work modes</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="catalog-section" id="catalog" aria-labelledby="catalog-title">
+        <div class="section-head">
+          <p class="eyebrow">Catalog</p>
+          <h2 id="catalog-title">Work as records, not resumes.</h2>
+          <p>
+            Code, sound, motion, writing, and signals arranged as sleeves with details on the back.
+          </p>
+        </div>
+
+        <div class="filter-shell">
+          <div class="filter-bar" id="catalogFilters" aria-label="Catalog filters"></div>
+          <button class="reset-button" id="resetSleeves" type="button">Reset Sleeves</button>
+        </div>
+
+        <div class="grid-status" aria-live="polite">
+          <span id="resultCount">0 entries</span>
+        </div>
+
+        <div class="work-grid" id="workGrid"></div>
+      </section>
+
+      <section class="notes-section" id="articles" aria-labelledby="articles-title">
+        <div class="section-head section-head-compact">
+          <p class="eyebrow">Writing</p>
+          <h2 id="articles-title">Long-form notes for technical work.</h2>
+        </div>
+        <div class="article-list" id="articleList"></div>
+      </section>
+
+      <section class="contact-section" id="contact" aria-labelledby="contact-title">
+        <div class="contact-copy">
+          <p class="eyebrow">Contact</p>
+          <h2 id="contact-title">Send the work where it needs to go.</h2>
+        </div>
+        <div class="contact-links">
+          <a href="mailto:hello@shen.sh">Email</a>
+          <a href="#catalog" data-filter-link="dev">GitHub shelf</a>
+          <a href="#catalog" data-filter-link="music">Music shelf</a>
+          <a href="#catalog" data-filter-link="video">Video shelf</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>shen.sh</span>
+      <span>Code / sound / film / words</span>
+    </footer>
+  </body>
+</html>

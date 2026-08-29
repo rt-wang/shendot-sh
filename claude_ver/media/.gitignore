@@ -1,0 +1,5 @@
+# Media binaries stay out of git — they bloat every clone forever.
+# Host them on object storage (R2 / Bunny / Vercel Blob) for production,
+# or switch to git-lfs if you really want them versioned.
+*
+!.gitignore
