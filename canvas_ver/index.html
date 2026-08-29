@@ -795,21 +795,16 @@ button{font:inherit;color:inherit}
 .deck--docked .deck__btn{
   width:30px;height:30px;padding:0;
   display:grid;place-items:center;
-  color:#FFF;border:0;background:transparent;border-radius:50%;
+  color:#FFF;border:0;background:transparent;
   opacity:.9;
   filter:drop-shadow(0 1px 3px rgba(0,0,0,.55));
-  transition:transform .15s ease,opacity .15s ease,
-             background-color .15s ease,box-shadow .15s ease;
+  transition:transform .15s ease,opacity .15s ease;
 }
 .deck--docked .deck__btn svg{width:15px;height:15px;display:block}
-/* leaving is a decision — make it land under the cursor, not fade away */
+/* leaving is a decision — the cross grows under the cursor, nothing else */
 .deck--docked .deck__btn:hover,
-.deck--docked .deck__btn:focus-visible{
-  opacity:1;
-  transform:scale(1.2);
-  background:rgba(255,255,255,.18);
-  box-shadow:0 0 0 1px rgba(255,255,255,.55);
-}
+.deck--docked .deck__btn:focus-visible{opacity:1;transform:scale(1.4)}
+.deck--docked .deck__btn:focus-visible{outline:2px solid #FFF;outline-offset:2px}
 /* and the band under it deepens, so the whole corner reads as the way out */
 .deck--docked .deck__bar:hover ~ .deck__scrim--top{
   background:linear-gradient(180deg,
