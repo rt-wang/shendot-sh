@@ -522,6 +522,33 @@ button{font:inherit;color:inherit}
 .detail__slot{margin:28px 0 0}
 .detail__slot--ratio{aspect-ratio:16/9}
 
+/* a record we can play ourselves: sleeve on the left, the transport lives in the bar */
+.record{display:flex;gap:20px;align-items:flex-end;height:auto!important}
+.record__art{
+  width:clamp(120px,26%,172px);aspect-ratio:1;object-fit:cover;
+  border:1px solid var(--panel-line);background:#0F1013;flex:0 0 auto;
+}
+.record__side{flex:1 1 auto;min-width:0;padding-bottom:4px}
+.record__play{
+  display:inline-flex;align-items:center;gap:10px;
+  border:1px solid var(--panel-text);background:transparent;color:var(--panel-text);
+  padding:10px 16px;cursor:pointer;
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+}
+.record__play:hover{background:var(--panel-text);color:var(--panel)}
+.record__play svg{width:11px;height:11px;fill:currentColor}
+.record__note{
+  margin:12px 0 0;
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--panel-soft);
+}
+
+/* tracklist rows become the queue once we own the audio */
+.detail__track--live{cursor:pointer}
+.detail__track--live:hover span:first-child{color:var(--accent-lift)}
+.detail__track--on span:first-child{color:var(--accent-lift)}
+.detail__track--on span:first-child::before{content:"▸ ";}
+
 /* shown instead of a player when the deck is busy with another record */
 .detail__takeover{
   width:100%;height:100%;
@@ -562,6 +589,84 @@ button{font:inherit;color:inherit}
 .detail__cta:hover{background:var(--accent-deep)}
 /* nothing to link to yet — a ghost, not a faded button */
 .detail__cta--soon{background:transparent;border:1px solid var(--panel-line);color:var(--panel-soft);cursor:default}
+
+/* ══════════════ the now-playing bar ══════════════
+   our own transport over our own <audio>, because a cross-origin embed can be neither
+   styled nor controlled. the <audio> lives in the bar and the bar never unmounts, so
+   sound carries across panning, filtering and every sheet you open. */
+.bar{
+  position:fixed;left:0;right:0;bottom:var(--rail-h,48px);z-index:75;
+  display:none;align-items:center;gap:16px;
+  padding:11px 18px 13px;
+  background:var(--panel);
+  border-top:1px solid var(--panel-line);
+  color:var(--panel-text);
+  animation:deck-rise .3s cubic-bezier(.2,.75,.2,1);
+}
+.bar.is-live{display:flex}
+.bar__transport{display:flex;align-items:center;gap:14px;flex:0 0 auto}
+.bar__btn{
+  border:0;background:transparent;cursor:pointer;color:var(--panel-text);
+  padding:2px;line-height:0;
+}
+.bar__btn svg{fill:currentColor;display:block}
+.bar__btn--step svg{width:20px;height:20px}
+.bar__btn--play svg{width:26px;height:26px}
+.bar__btn--loop svg{width:17px;height:17px}
+.bar__btn--loop{color:var(--panel-soft)}
+.bar__btn--loop[aria-pressed="true"]{color:var(--accent-lift)}
+.bar__btn:hover{color:#FFF}
+.bar__btn:focus-visible{outline:2px solid var(--accent-lift);outline-offset:3px}
+
+.bar__art{
+  width:38px;height:38px;flex:0 0 auto;object-fit:cover;
+  border-radius:5px;background:#2A2B2F;
+}
+.bar__id{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.bar__title{
+  font-size:15px;font-weight:500;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.bar__sub{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--panel-soft);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.bar__more{
+  flex:0 0 auto;border:0;background:transparent;cursor:pointer;
+  color:var(--panel-soft);letter-spacing:.16em;font-size:15px;padding:4px 6px;
+}
+.bar__more:hover{color:var(--panel-text)}
+
+/* the seek line sits on the bar's own bottom edge, like a hairline rule */
+.bar__seek{
+  position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:var(--panel-line);cursor:pointer;
+}
+.bar__seek::before{content:"";position:absolute;left:0;right:0;top:-7px;height:14px}
+.bar__seek i{display:block;height:100%;width:0;background:var(--panel-soft)}
+.bar__seek:hover i{background:var(--accent-lift)}
+
+.bar__menu{
+  position:absolute;right:14px;bottom:calc(100% + 8px);
+  min-width:196px;
+  background:var(--panel);border:1px solid var(--panel-line);
+  box-shadow:0 18px 40px rgba(12,13,15,.5);
+  display:none;flex-direction:column;
+}
+.bar__menu.is-open{display:flex}
+.bar__menu button,.bar__menu a{
+  border:0;background:transparent;text-align:left;text-decoration:none;cursor:pointer;
+  padding:11px 14px;color:var(--panel-soft);
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+}
+.bar__menu button:hover,.bar__menu a:hover{background:#212227;color:var(--panel-text)}
+
+@media(max-width:720px){
+  .bar{gap:12px;padding:9px 12px 11px}
+  .bar__transport{gap:10px}
+  .bar__sub{display:none}
+}
 
 /* ══════════════ the deck — the player that outlives the sheet ══════════════
    it never changes parents: moving an iframe in the DOM reloads it and the sound cuts
@@ -679,6 +784,28 @@ button{font:inherit;color:inherit}
   <div class="detail__sheet" id="detailSheet"></div>
 </div>
 
+<div class="bar" id="bar">
+  <audio id="barAudio" preload="metadata"></audio>
+  <div class="bar__transport">
+    <button class="bar__btn bar__btn--step" data-bar="prev" title="Previous" aria-label="Previous track">
+      <svg viewBox="0 0 24 24"><path d="M22 5v14l-9-7zM11 5v14l-9-7z"/></svg></button>
+    <button class="bar__btn bar__btn--play" data-bar="toggle" title="Play" aria-label="Play">
+      <svg viewBox="0 0 24 24"><path d="M6 3.5 20.5 12 6 20.5z"/></svg></button>
+    <button class="bar__btn bar__btn--step" data-bar="next" title="Next" aria-label="Next track">
+      <svg viewBox="0 0 24 24"><path d="M2 5v14l9-7zM13 5v14l9-7z"/></svg></button>
+    <button class="bar__btn bar__btn--loop" data-bar="loop" aria-pressed="false" title="Repeat" aria-label="Repeat">
+      <svg viewBox="0 0 24 24"><path d="M7 7h11v3l5-4.5L18 1v3H4v7h3zm10 10H6v-3l-5 4.5L6 23v-3h14v-7h-3z"/></svg></button>
+  </div>
+  <img class="bar__art" id="barArt" alt="">
+  <div class="bar__id">
+    <span class="bar__title" id="barTitle"></span>
+    <span class="bar__sub" id="barSub"></span>
+  </div>
+  <button class="bar__more" data-bar="more" aria-label="More" aria-expanded="false">•••</button>
+  <div class="bar__menu" id="barMenu"></div>
+  <div class="bar__seek" id="barSeek"><i id="barFill"></i></div>
+</div>
+
 <div class="deck" id="deck">
   <div class="deck__bar">
     <span class="deck__now"></span>
@@ -694,6 +821,10 @@ button{font:inherit;color:inherit}
 /* ═══════════════════════════════════════════════════════
    DATA
    ═══════════════════════════════════════════════════════ */
+
+/* untitled:start */
+const UNTITLED = {};
+/* untitled:end */
 
 const ENTRIES = [
   {no:"A01", cat:"code", title:"ob-shell", year:"2026", format:"Repository · Swift",
@@ -1623,6 +1754,149 @@ menuEl.addEventListener("click", ev => {
    DETAIL PAGE
    ═══════════════════════════════════════════════════════ */
 
+/* ── the now-playing bar ───────────────────────────────
+   UNTITLED (generated at the top of this file) gives us the mp3 behind each project,
+   so music plays through our own <audio> and our own transport. a project missing from
+   UNTITLED falls back to untitled.stream's iframe in the deck below. */
+const barEl    = document.getElementById("bar");
+const audioEl  = document.getElementById("barAudio");
+const barArt   = document.getElementById("barArt");
+const barTitle = document.getElementById("barTitle");
+const barSub   = document.getElementById("barSub");
+const barMenu  = document.getElementById("barMenu");
+const barFill  = document.getElementById("barFill");
+const barSeek  = document.getElementById("barSeek");
+
+let queue = [];      // tracks of the record now loaded
+let qi    = 0;       // index into queue
+let qFrom = -1;      // ENTRIES index the queue came from
+
+const SVG_PLAY  = '<svg viewBox="0 0 24 24"><path d="M6 3.5 20.5 12 6 20.5z"/></svg>';
+const SVG_PAUSE = '<svg viewBox="0 0 24 24"><path d="M5.5 3.5h5v17h-5zm8 0h5v17h-5z"/></svg>';
+
+// the rail is fixed to the bottom, so the bar has to sit exactly on top of it
+function measureRail(){
+  document.documentElement.style.setProperty("--rail-h", railEl.offsetHeight + "px");
+}
+
+function mmss(sec){
+  sec = Math.max(0, Math.round(sec || 0));
+  return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
+}
+
+function untitledFor(e){
+  const id = e.media && e.media.type === "embed" && e.media.src.split("/").pop();
+  return id && UNTITLED[id] ? UNTITLED[id] : null;
+}
+
+function playRecord(i, n){
+  const e = ENTRIES[i], u = untitledFor(e);
+  if(!u) return;
+  if(qFrom !== i){ queue = u.tracks; qFrom = i; }
+  ejectDeck();                       // one player at a time: a docked video steps aside
+  loadTrack(n || 0, true);
+  barEl.classList.add("is-live");
+  measureRail();
+}
+
+function loadTrack(n, autoplay){
+  if(!queue[n]) return;
+  qi = n;
+  const e = ENTRIES[qFrom];
+  audioEl.src = queue[n].src;
+  barArt.src = e.cover || "";
+  barArt.alt = e.title;
+  barTitle.textContent = queue[n].t;
+  barSub.textContent = e.title + " · " + mmss(queue[n].d);
+  barFill.style.width = "0%";
+  if(autoplay) audioEl.play().catch(() => {});   // a blocked autoplay is not an error
+  paintTrackRows();
+}
+
+function nextTrack(step){
+  const n = qi + (step || 1);
+  if(n < 0) return loadTrack(0, true);
+  if(n >= queue.length){
+    if(!audioEl.loop) { audioEl.pause(); audioEl.currentTime = 0; }
+    return loadTrack(0, audioEl.loop);
+  }
+  loadTrack(n, true);
+}
+
+// mark the row that is playing, whenever the sheet happens to be showing this record
+function paintTrackRows(){
+  document.querySelectorAll(".detail__track--live").forEach(row => {
+    const on = Number(row.dataset.entry) === qFrom && Number(row.dataset.track) === qi;
+    row.classList.toggle("detail__track--on", on);
+  });
+  const btn = document.querySelector("[data-play-entry]");
+  if(btn) btn.querySelector("[data-icon]").innerHTML =
+    (Number(btn.dataset.playEntry) === qFrom && !audioEl.paused) ? SVG_PAUSE : SVG_PLAY;
+}
+
+function paintPlayBtn(){
+  const b = barEl.querySelector('[data-bar="toggle"]');
+  b.innerHTML = audioEl.paused ? SVG_PLAY : SVG_PAUSE;
+  b.title = b.ariaLabel = audioEl.paused ? "Play" : "Pause";
+  paintTrackRows();
+}
+
+function stopAudio(){
+  audioEl.pause();
+  audioEl.removeAttribute("src");
+  audioEl.load();
+  barEl.classList.remove("is-live");
+  barMenu.classList.remove("is-open");
+  queue = []; qi = 0; qFrom = -1;
+  paintTrackRows();
+}
+
+barEl.addEventListener("click", ev => {
+  const b = ev.target.closest("[data-bar]");
+  if(!b) return;
+  const act = b.dataset.bar;
+  if(act === "toggle") audioEl.paused ? audioEl.play().catch(() => {}) : audioEl.pause();
+  if(act === "next")   nextTrack(1);
+  if(act === "prev")   audioEl.currentTime > 3 ? (audioEl.currentTime = 0) : nextTrack(-1);
+  if(act === "loop"){
+    audioEl.loop = !audioEl.loop;
+    b.setAttribute("aria-pressed", String(audioEl.loop));
+  }
+  if(act === "more"){
+    const open = !barMenu.classList.contains("is-open");
+    const e = ENTRIES[qFrom];
+    barMenu.innerHTML =
+      '<button data-bar="notes">Liner notes</button>' +
+      (e && e.href && /^https?:/.test(e.href)
+        ? '<a href="' + e.href + '" target="_blank" rel="noopener">Open on untitled.stream</a>' : "") +
+      '<button data-bar="stop">Stop</button>';
+    barMenu.classList.toggle("is-open", open);
+    b.setAttribute("aria-expanded", String(open));
+  }
+  if(act === "notes"){ barMenu.classList.remove("is-open"); openDetail(qFrom); }
+  if(act === "stop")  stopAudio();
+});
+
+// click anywhere on the hairline to seek
+barSeek.addEventListener("click", ev => {
+  if(!audioEl.duration) return;
+  const r = barSeek.getBoundingClientRect();
+  audioEl.currentTime = ((ev.clientX - r.left) / r.width) * audioEl.duration;
+});
+
+audioEl.addEventListener("timeupdate", () => {
+  if(audioEl.duration)
+    barFill.style.width = (audioEl.currentTime / audioEl.duration * 100) + "%";
+});
+audioEl.addEventListener("ended", () => nextTrack(1));
+audioEl.addEventListener("play", paintPlayBtn);
+audioEl.addEventListener("pause", paintPlayBtn);
+document.addEventListener("click", ev => {
+  if(!ev.target.closest("#bar")) barMenu.classList.remove("is-open");
+});
+window.addEventListener("resize", measureRail);
+measureRail();
+
 /* ── the deck ──────────────────────────────────────────
    one player for the whole page. it is a child of <body> and never moves in the DOM,
    because reparenting an iframe reloads it — the sound would stop. opening a record
@@ -1649,6 +1923,7 @@ const EMBED_W = 900;   // internal width that keeps untitled's compact player on
 
 function loadDeck(i){
   if(deckIndex === i) return;   // already loaded: leave it be, rebuilding would reload it
+  if(!audioEl.paused) stopAudio();   // one player at a time
   const e = ENTRIES[i];
   deckIndex = i;
   deckEngaged = false;
@@ -1747,6 +2022,19 @@ detailSheet.addEventListener("scroll", syncDeck);
 // offers to take it over rather than silently cutting the music off.
 function slotHTML(e, i){
   if(!e.media) return "";
+  const u = untitledFor(e);
+  if(u) return (
+    '<div class="detail__slot record" id="detailSlot">' +
+      (e.cover ? '<img class="record__art" src="' + e.cover + '" alt="">' : "") +
+      '<div class="record__side">' +
+        '<button class="record__play" data-play-entry="' + i + '">' +
+          '<span data-icon>' + SVG_PLAY + '</span>' +
+          (u.tracks.length > 1 ? "Play all" : "Play") +
+        "</button>" +
+        '<p class="record__note">' + u.tracks.length + " tracks · " +
+          mmss(u.tracks.reduce((a, t) => a + t.d, 0)) + " · from untitled.stream</p>" +
+      "</div>" +
+    "</div>");
   const busy = deckIndex > -1 && deckIndex !== i && deckEngaged;
   const cls  = "detail__slot" + (isRatio(e.media) ? " detail__slot--ratio" : "");
   const size = e.media.type === "embed" ? ' style="height:' + e.media.height + 'px"' : "";
@@ -1759,6 +2047,17 @@ function slotHTML(e, i){
 }
 
 detailSheet.addEventListener("click", ev => {
+  const play = ev.target.closest("[data-play-entry]");
+  if(play){
+    const i = Number(play.dataset.playEntry);
+    if(qFrom === i && !audioEl.paused) audioEl.pause();
+    else if(qFrom === i) audioEl.play().catch(() => {});
+    else playRecord(i, 0);
+    return;
+  }
+  const row = ev.target.closest(".detail__track--live");
+  if(row){ playRecord(Number(row.dataset.entry), Number(row.dataset.track)); return; }
+
   const b = ev.target.closest("[data-takeover]");
   if(!b) return;
   const i = Number(b.dataset.takeover);
@@ -1770,10 +2069,17 @@ detailSheet.addEventListener("click", ev => {
 function openDetail(i){
   const e = ENTRIES[i];
   const rows = e.rows.map(r => '<div class="liner__row"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>').join("");
-  const tracks = e.tracks
-    ? '<div class="detail__tracks"><h4>Tracklist</h4>' +
-      e.tracks.map(t => '<div class="detail__track"><span>' + t[0] + '</span><span>' + t[1] + '</span></div>').join("") +
-      "</div>"
+  // prefer untitled's own tracklist when we have it: it cannot drift out of date, and
+  // every row is clickable because we hold the audio
+  const u = untitledFor(e);
+  const rowsOf = u
+    ? u.tracks.map((t, n) =>
+        '<div class="detail__track detail__track--live" data-entry="' + i + '" data-track="' + n + '">' +
+        "<span>" + t.t + "</span><span>" + mmss(t.d) + "</span></div>").join("")
+    : (e.tracks || []).map(t =>
+        '<div class="detail__track"><span>' + t[0] + '</span><span>' + t[1] + "</span></div>").join("");
+  const tracks = (u || e.tracks)
+    ? '<div class="detail__tracks"><h4>Tracklist</h4>' + rowsOf + "</div>"
     : "";
 
   detailSheet.innerHTML =
@@ -1798,7 +2104,11 @@ function openDetail(i){
   detailEl.classList.add("is-open");
   // park the deck over the slot — unless it is busy playing something else, in which
   // case the slot shows a takeover button and the docked player keeps going
-  if(e.media && !(deckIndex > -1 && deckIndex !== i && deckEngaged)){ loadDeck(i); parkDeck(); }
+  if(untitledFor(e)){
+    // our own player handles this one — the sheet only shows the sleeve
+    if(deckEl.classList.contains("deck--parked")) dockDeck();
+    paintTrackRows();
+  }else if(e.media && !(deckIndex > -1 && deckIndex !== i && deckEngaged)){ loadDeck(i); parkDeck(); }
   else if(deckEl.classList.contains("deck--parked")) dockDeck();
   // the sheet is rebuilt each time, so the widget has to be asked to render again
   if(e.tweetUrl && window.twttr && twttr.widgets) twttr.widgets.load(detailSheet);
