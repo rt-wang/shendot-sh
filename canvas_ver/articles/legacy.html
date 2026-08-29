@@ -106,6 +106,33 @@ footer .social i{font-style:normal;color:var(--rule);padding:0 7px}
 </head>
 <body>
 
+<script>
+/* Read inside the catalog's reader, this page hands navigation back to the
+   parent instead of moving the frame: the catalog is still alive up there,
+   holding the music. This lives INLINE, so the guard is in place the moment the
+   parser reaches it — before any link below exists to be clicked. Wiring it
+   from the parent could not promise that: it depends on observing this
+   document from outside, and the frame's load event waits on the webfonts, so
+   the first click could escape and load a second catalog into the frame. */
+(function () {
+  if (window.parent === window) return;      /* opened directly: an ordinary page */
+  document.documentElement.setAttribute("data-reader-aware", "1");
+  function send(m) { parent.postMessage(m, location.origin); }
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest("a[href]");
+    if (!a || a.target === "_blank") return;
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var u = new URL(a.getAttribute("href"), location.href);
+    if (u.origin !== location.origin) return;
+    e.preventDefault();
+    send({ reader: "go", href: u.pathname + u.search + u.hash });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") send({ reader: "escape" });
+  });
+})();
+</script>
+
 <header class="topbar">
   <a class="topbar__name" href="../index.html">Ruotian Wang</a>
   <a class="back mono" href="../index.html">← Catalog</a>
@@ -136,7 +163,7 @@ footer .social i{font-style:normal;color:var(--rule);padding:0 7px}
 
 <footer class="mono">
   <span>© 2026 Ruotian Wang</span>
-  <nav class="social"><a href="https://linktr.ee/shendot" target="_blank" rel="noopener">Music</a><i>·</i><a href="https://github.com/rt-wang" target="_blank" rel="noopener">GitHub</a><i>·</i><a href="https://www.instagram.com/shendottttt/" target="_blank" rel="noopener">Instagram</a><i>·</i><a href="https://www.xiaohongshu.com/user/profile/5baf1950244c3800014fa026" target="_blank" rel="noopener">小红书</a><i>·</i><a href="https://www.douyin.com/user/MS4wLjABAAAAz9LK8Ejw_6Wdh_vzMRQ-drs7tcu3s9Xorx5Szx2OsFI" target="_blank" rel="noopener">抖音</a></nav>
+  <nav class="social"><a href="https://linktr.ee/shendot" target="_blank" rel="noopener">Music</a><i>·</i><a href="https://github.com/rt-wang" target="_blank" rel="noopener">GitHub</a><i>·</i><a href="https://www.instagram.com/shendottttt/" target="_blank" rel="noopener">Instagram</a><i>·</i><a href="https://x.com/shendottt" target="_blank" rel="noopener">X</a><i>·</i><a href="https://www.xiaohongshu.com/user/profile/5baf1950244c3800014fa026" target="_blank" rel="noopener">小红书</a><i>·</i><a href="https://www.douyin.com/user/MS4wLjABAAAAz9LK8Ejw_6Wdh_vzMRQ-drs7tcu3s9Xorx5Szx2OsFI" target="_blank" rel="noopener">抖音</a></nav>
   <a href="../index.html">Back to the catalog</a>
 </footer>
 

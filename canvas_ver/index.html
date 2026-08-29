@@ -1440,6 +1440,7 @@ const SOCIALS = [
   { label: "Music",     href: "https://linktr.ee/shendot" },
   { label: "GitHub",    href: "https://github.com/rt-wang" },
   { label: "Instagram", href: "https://www.instagram.com/shendottttt/" },
+  { label: "X",         href: "https://x.com/shendottt" },
   { label: "小红书",     href: "https://www.xiaohongshu.com/user/profile/5baf1950244c3800014fa026" },
   { label: "抖音",       href: "https://www.douyin.com/user/MS4wLjABAAAAz9LK8Ejw_6Wdh_vzMRQ-drs7tcu3s9Xorx5Szx2OsFI" }
 ];
@@ -2841,6 +2842,11 @@ function wireFrame(){
 
   syncTitle();
 
+  /* A generated article carries its own parse-time guard and talks to us by
+     postMessage. Attaching ours too would act on the same click twice — two
+     steps back instead of one. Only wire pages that cannot guard themselves. */
+  if(d.documentElement.getAttribute("data-reader-aware")) return true;
+
   d.addEventListener("click", ev => {
     const a = ev.target.closest && ev.target.closest("a[href]");
     if(!a) return;
@@ -2874,13 +2880,36 @@ function wireFrame(){
    whole second copy of the canvas inside the reader. So arm as soon as the new
    document exists. The old document is already flagged, so the poll keeps
    going until the new one actually appears. */
+/* Poll until the document actually showing is both wired and finished, not
+   merely until something got wired: a navigating frame can briefly hand out a
+   placeholder document, and stopping on that one left the real article
+   unguarded until its load event — exactly the gap this is here to close. */
 function armFrame(){
   let tries = 0;
   (function poll(){
-    if(wireFrame() || ++tries > 600) return;
+    wireFrame();
+    let settled = false;
+    try{
+      const d = readerFrame.contentDocument;
+      settled = !!d && !!d.__readerWired && d.readyState === "complete";
+    }catch(_){}
+    if(settled || ++tries > 600) return;
     requestAnimationFrame(poll);
   })();
 }
+
+/* The article's own guard reports here. Same-origin and from our frame only. */
+window.addEventListener("message", ev => {
+  if(ev.origin !== location.origin) return;
+  if(ev.source !== readerFrame.contentWindow) return;
+  const m = ev.data;
+  if(!m || !m.reader) return;
+  if(m.reader === "escape"){ toCatalog(); return; }
+  if(m.reader !== "go" || !m.href) return;
+  const u = new URL(m.href, location.origin);
+  if(CATALOG_URL.test(u.pathname)) toCatalog();
+  else if(ARTICLE_URL.test(u.pathname)) openReader(u.pathname + u.search + u.hash, true);
+});
 
 readerFrame.addEventListener("load", () => { wireFrame(); if(readerOpen) syncTitle(); });
 

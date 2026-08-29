@@ -9,6 +9,7 @@ const SOCIALS = [
   { label: "Music",     href: "https://linktr.ee/shendot" },
   { label: "GitHub",    href: "https://github.com/rt-wang" },
   { label: "Instagram", href: "https://www.instagram.com/shendottttt/" },
+  { label: "X",         href: "https://x.com/shendottt" },
   { label: "小红书",     href: "https://www.xiaohongshu.com/user/profile/5baf1950244c3800014fa026" },
   { label: "抖音",       href: "https://www.douyin.com/user/MS4wLjABAAAAz9LK8Ejw_6Wdh_vzMRQ-drs7tcu3s9Xorx5Szx2OsFI" }
 ];
@@ -161,6 +162,33 @@ footer .social i{font-style:normal;color:var(--rule);padding:0 7px}
 </style>
 </head>
 <body>
+
+<script>
+/* Read inside the catalog's reader, this page hands navigation back to the
+   parent instead of moving the frame: the catalog is still alive up there,
+   holding the music. This lives INLINE, so the guard is in place the moment the
+   parser reaches it — before any link below exists to be clicked. Wiring it
+   from the parent could not promise that: it depends on observing this
+   document from outside, and the frame's load event waits on the webfonts, so
+   the first click could escape and load a second catalog into the frame. */
+(function () {
+  if (window.parent === window) return;      /* opened directly: an ordinary page */
+  document.documentElement.setAttribute("data-reader-aware", "1");
+  function send(m) { parent.postMessage(m, location.origin); }
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest("a[href]");
+    if (!a || a.target === "_blank") return;
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var u = new URL(a.getAttribute("href"), location.href);
+    if (u.origin !== location.origin) return;
+    e.preventDefault();
+    send({ reader: "go", href: u.pathname + u.search + u.hash });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") send({ reader: "escape" });
+  });
+})();
+</script>
 
 <header class="topbar">
   <a class="topbar__name" href="../index.html">Ruotian Wang</a>
