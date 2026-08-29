@@ -61,7 +61,7 @@ function page(a, text){
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(a.title)} — Ruotian Wang</title>
+<title>${esc(a.title)} — shen. catalog</title>
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
 <link rel="icon" type="image/png" sizes="512x512" href="../favicon.png">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
@@ -191,7 +191,7 @@ footer .social i{font-style:normal;color:var(--rule);padding:0 7px}
 </script>
 
 <header class="topbar">
-  <a class="topbar__name" href="../index.html">Ruotian Wang</a>
+  <a class="topbar__name" href="../index.html">shen. catalog</a>
   <a class="back mono" href="../index.html">← Catalog</a>
 </header>
 
