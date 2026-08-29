@@ -1075,17 +1075,34 @@ function overlapsTitle(x, y, size){
 }
 
 /* Tidy: the crate grid, hung directly off the bottom-left of the title block. */
+/* The box a node actually paints into. A rotated word sweeps a wider, shorter
+   box than its set size, and this is the honest bound of it — unlike EXCLUDE,
+   which pads rotated words by half their length to keep the random scatter well
+   clear of them. Tidy wants the real edge, not that cushion. */
+function paintedBox(el){
+  const w = el.offsetWidth, h = el.offsetHeight;
+  const r = (el._pos.rot || 0) * Math.PI / 180;
+  const c = Math.abs(Math.cos(r)), sn = Math.abs(Math.sin(r));
+  const W = w * c + h * sn, H = w * sn + h * c;
+  return { x: el._pos.x + (w - W) / 2, y: el._pos.y + (h - H) / 2, w: W, h: H };
+}
+
 function tidyLayout(){
   const COL = 4, CELL = 300, SIZE = 250;
   /* The headline words live outside the title block's own box, so clearing
-     TITLE_H alone let the first row slide under them. */
-  let left = TITLE_POS.x, bottom = TITLE_POS.y + TITLE_H;
-  EXCLUDE.forEach(r => {
+     TITLE_H alone let the first row slide under them. Measure the words
+     themselves — reusing EXCLUDE here dropped the grid half a word's length
+     down the page, which read as a hole under the headline. */
+  let left = Infinity, bottom = -Infinity;
+  [titleNode].concat(headNodes).map(paintedBox).forEach(r => {
     left   = Math.min(left, r.x);
     bottom = Math.max(bottom, r.y + r.h);
   });
+  // TITLE_H is only refreshed when the headline face changes, so it can still be
+  // its 430 default while the block is half that — measure the node, not the guess
+  if(!isFinite(left)){ left = TITLE_POS.x; bottom = TITLE_POS.y + TITLE_H; }
   const x0 = left;
-  const y0 = bottom + 70;
+  const y0 = bottom + 64;
   return ENTRIES.map((e, i) => ({
     x: x0 + (i % COL) * CELL,
     y: y0 + Math.floor(i / COL) * (SIZE + 100),
