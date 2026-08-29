@@ -596,53 +596,97 @@ button{font:inherit;color:inherit}
    sound carries across panning, filtering and every sheet you open. */
 .bar{
   position:fixed;
-  right:var(--gutter);bottom:calc(var(--rail-h,48px) + 16px);
+  right:var(--bar-r,var(--gutter));
+  bottom:var(--bar-b,calc(var(--rail-h,48px) + 16px));
   z-index:75;
-  width:min(430px,calc(100vw - 2 * var(--gutter)));
+  --bar-w:min(430px,calc(100vw - 2 * var(--gutter)));
+  width:58px;                       /* closed: just the sleeve */
   display:none;align-items:center;gap:13px;
-  padding:10px 12px 15px;
-  border-radius:16px;
-  color:var(--panel-text);
+  padding:6px;
+  border-radius:18px;
+  overflow:hidden;                  /* the transport is clipped away when closed */
+  color:var(--ink);
+  cursor:grab;
+  touch-action:none;                /* we drag it ourselves */
   animation:deck-rise .3s cubic-bezier(.2,.75,.2,1);
+  transition:width .34s cubic-bezier(.2,.75,.2,1),
+             padding .34s cubic-bezier(.2,.75,.2,1),
+             border-radius .3s ease;
 
-  /* glass: a dark tint thin enough to read the canvas through, blurred and
-     saturated so what shows through goes soft and colourful rather than busy.
-     the top edge catches a highlight, which is what sells it as a pane. */
+  /* white glass: a bright tint over a heavy blur, a near-white hairline, and a
+     highlight along the top edge — the catch of light is what reads as a pane */
   background:
-    linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0) 46%),
-    rgba(22,23,27,.78);
-  backdrop-filter:blur(22px) saturate(185%);
-  -webkit-backdrop-filter:blur(20px) saturate(180%);
-  border:1px solid rgba(255,255,255,.13);
+    linear-gradient(180deg,rgba(255,255,255,.66),rgba(255,255,255,.34)),
+    rgba(255,255,255,.22);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border:1px solid rgba(255,255,255,.72);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.10),
-    0 18px 44px rgba(12,13,15,.36),
-    0 2px 8px rgba(12,13,15,.22);
+    inset 0 1px 0 rgba(255,255,255,.9),
+    0 16px 40px rgba(19,21,25,.20),
+    0 2px 6px rgba(19,21,25,.10);
 }
-/* without backdrop-filter the tint alone would be a smear — go solid instead */
+/* without backdrop-filter the tint alone would be a smear — go opaque instead */
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-  .bar{background:var(--panel);border-color:var(--panel-line)}
+  .bar{background:rgba(244,243,240,.97);border-color:rgba(19,21,25,.14)}
 }
 .bar.is-live{display:flex}
+.bar:hover,.bar.is-open{width:var(--bar-w);padding:10px 12px 15px;border-radius:16px}
+.bar.is-dragging{cursor:grabbing;transition:none}
+.bar.is-dragging *{pointer-events:none}
+
+/* the sleeve is the one thing that never hides */
+.bar__cover{
+  position:relative;flex:0 0 auto;
+  width:46px;height:46px;border-radius:11px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(19,21,25,.3);
+  transition:width .34s cubic-bezier(.2,.75,.2,1),
+             height .34s cubic-bezier(.2,.75,.2,1),
+             border-radius .3s ease;
+}
+.bar:hover .bar__cover,.bar.is-open .bar__cover{width:38px;height:38px;border-radius:7px}
+.bar__art{display:block;width:100%;height:100%;object-fit:cover;background:rgba(19,21,25,.1)}
+
+/* three bars over the sleeve, so a closed tile still says it is playing */
+.bar__eq{
+  position:absolute;left:0;right:0;bottom:0;height:64%;
+  display:flex;align-items:flex-end;justify-content:center;gap:2px;
+  padding-bottom:5px;
+  background:linear-gradient(180deg,rgba(10,11,13,0),rgba(10,11,13,.6));
+  transition:opacity .16s ease;
+}
+.bar__eq i{
+  width:2px;height:4px;border-radius:1px;background:#FFF;transform-origin:bottom;
+  animation:eq .78s ease-in-out infinite alternate;
+}
+.bar__eq i:nth-child(2){animation-duration:.54s}
+.bar__eq i:nth-child(3){animation-duration:.96s}
+@keyframes eq{from{transform:scaleY(1)}to{transform:scaleY(3.6)}}
+.bar.is-paused .bar__eq i{animation-play-state:paused}
+/* open, the transport says it better than the bars do */
+.bar:hover .bar__eq,.bar.is-open .bar__eq{opacity:0}
+
+/* everything but the sleeve fades in as the tile opens */
+.bar__transport,.bar__id,.bar__more,.bar__seek{opacity:0;transition:opacity .16s ease}
+.bar:hover .bar__transport,.bar.is-open .bar__transport,
+.bar:hover .bar__id,.bar.is-open .bar__id,
+.bar:hover .bar__more,.bar.is-open .bar__more,
+.bar:hover .bar__seek,.bar.is-open .bar__seek{opacity:1;transition-delay:.09s}
+
 .bar__transport{display:flex;align-items:center;gap:11px;flex:0 0 auto}
 .bar__btn{
-  border:0;background:transparent;cursor:pointer;color:var(--panel-text);
+  border:0;background:transparent;cursor:pointer;color:var(--ink);
   padding:2px;line-height:0;
 }
 .bar__btn svg{fill:currentColor;display:block}
 .bar__btn--step svg{width:20px;height:20px}
 .bar__btn--play svg{width:26px;height:26px}
 .bar__btn--loop svg{width:17px;height:17px}
-.bar__btn--loop{color:rgba(255,255,255,.55)}
-.bar__btn--loop[aria-pressed="true"]{color:var(--accent-lift)}
-.bar__btn:hover{color:#FFF}
-.bar__btn:focus-visible{outline:2px solid var(--accent-lift);outline-offset:3px}
+.bar__btn--loop{color:rgba(19,21,25,.42)}
+.bar__btn--loop[aria-pressed="true"]{color:var(--accent)}
+.bar__btn:hover{color:var(--accent)}
+.bar__btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
-.bar__art{
-  width:38px;height:38px;flex:0 0 auto;object-fit:cover;
-  border-radius:6px;background:rgba(255,255,255,.08);
-  box-shadow:0 1px 3px rgba(12,13,15,.4);
-}
 .bar__id{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
 .bar__title{
   font-size:15px;font-weight:500;
@@ -650,48 +694,51 @@ button{font:inherit;color:inherit}
 }
 .bar__sub{
   font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
-  color:rgba(255,255,255,.66);
+  color:var(--ink-soft);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .bar__more{
   flex:0 0 auto;border:0;background:transparent;cursor:pointer;
-  color:rgba(255,255,255,.6);letter-spacing:.16em;font-size:15px;padding:4px 6px;
+  color:rgba(19,21,25,.5);letter-spacing:.16em;font-size:15px;padding:4px 6px;
 }
-.bar__more:hover{color:#FFF}
+.bar__more:hover{color:var(--ink)}
 
-/* the seek line sits on the bar's own bottom edge, like a hairline rule */
 .bar__seek{
   position:absolute;left:12px;right:12px;bottom:7px;height:3px;
-  background:rgba(255,255,255,.16);border-radius:2px;overflow:hidden;cursor:pointer;
+  background:rgba(19,21,25,.16);border-radius:2px;overflow:hidden;cursor:pointer;
 }
 /* the line is 3px but the grab area is not */
 .bar__seek::before{content:"";position:absolute;left:0;right:0;top:-7px;height:14px}
-.bar__seek i{display:block;height:100%;width:0;background:rgba(255,255,255,.72)}
-.bar__seek:hover i{background:var(--accent-lift)}
+.bar__seek i{display:block;height:100%;width:0;background:var(--ink)}
+.bar__seek:hover i{background:var(--accent)}
 
+/* the menu lives outside .bar, which clips — JS parks it over whatever corner
+   the tile has been dragged to */
 .bar__menu{
-  position:absolute;right:12px;bottom:calc(100% + 9px);
+  position:fixed;z-index:76;
   min-width:196px;
   border-radius:12px;overflow:hidden;
   background:
-    linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0) 46%),
-    rgba(24,25,29,.78);
-  backdrop-filter:blur(20px) saturate(180%);
-  -webkit-backdrop-filter:blur(20px) saturate(180%);
-  border:1px solid rgba(255,255,255,.13);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 16px 38px rgba(12,13,15,.4);
+    linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.42)),
+    rgba(255,255,255,.24);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border:1px solid rgba(255,255,255,.72);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 16px 38px rgba(19,21,25,.22);
   display:none;flex-direction:column;
 }
 .bar__menu.is-open{display:flex}
 .bar__menu button,.bar__menu a{
   border:0;background:transparent;text-align:left;text-decoration:none;cursor:pointer;
-  padding:11px 14px;color:var(--panel-soft);
+  padding:11px 14px;color:var(--ink-soft);
   font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
 }
-.bar__menu button:hover,.bar__menu a:hover{background:rgba(255,255,255,.09);color:var(--panel-text)}
+.bar__menu button:hover,.bar__menu a:hover{background:rgba(255,255,255,.5);color:var(--ink)}
 
 @media(max-width:720px){
-  .bar{left:12px;right:12px;width:auto;gap:11px;padding:9px 10px 14px}
+  /* no hover on a phone — the tile opens on tap and fills the width when it does */
+  .bar{--bar-w:calc(100vw - 24px);gap:11px}
+  .bar.is-open{padding:9px 10px 14px}
   .bar__transport{gap:9px}
   .bar__sub{display:none}
 }
@@ -736,7 +783,7 @@ button{font:inherit;color:inherit}
 .deck__btn:hover{border-color:var(--panel-soft);color:var(--panel-text)}
 /* the sheet owns the right side — when it is open, both step out of its way */
 .detail.is-open ~ .deck.deck--docked,
-.detail.is-open ~ .bar{right:auto;left:var(--gutter)}
+.detail.is-open ~ .bar:not(.bar--placed){right:auto;left:var(--gutter)}
 @keyframes deck-rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 
 @media(max-width:720px){
@@ -815,6 +862,10 @@ button{font:inherit;color:inherit}
 
 <div class="bar" id="bar">
   <audio id="barAudio" preload="metadata"></audio>
+  <div class="bar__cover">
+    <img class="bar__art" id="barArt" alt="">
+    <span class="bar__eq" aria-hidden="true"><i></i><i></i><i></i></span>
+  </div>
   <div class="bar__transport">
     <button class="bar__btn bar__btn--step" data-bar="prev" title="Previous" aria-label="Previous track">
       <svg viewBox="0 0 24 24"><path d="M22 5v14l-9-7zM11 5v14l-9-7z"/></svg></button>
@@ -825,15 +876,14 @@ button{font:inherit;color:inherit}
     <button class="bar__btn bar__btn--loop" data-bar="loop" aria-pressed="false" title="Repeat" aria-label="Repeat">
       <svg viewBox="0 0 24 24"><path d="M7 7h11v3l5-4.5L18 1v3H4v7h3zm10 10H6v-3l-5 4.5L6 23v-3h14v-7h-3z"/></svg></button>
   </div>
-  <img class="bar__art" id="barArt" alt="">
   <div class="bar__id">
     <span class="bar__title" id="barTitle"></span>
     <span class="bar__sub" id="barSub"></span>
   </div>
   <button class="bar__more" data-bar="more" aria-label="More" aria-expanded="false">•••</button>
-  <div class="bar__menu" id="barMenu"></div>
   <div class="bar__seek" id="barSeek"><i id="barFill"></i></div>
 </div>
+<div class="bar__menu" id="barMenu"></div>
 
 <div class="deck" id="deck">
   <div class="deck__bar">
@@ -1845,6 +1895,7 @@ function playRecord(i, n){
   ejectDeck();                       // one player at a time: a docked video steps aside
   loadTrack(n || 0, true);
   barEl.classList.add("is-live");
+  barEl.classList.toggle("is-paused", audioEl.paused);
   measureRail();
 }
 
@@ -1885,6 +1936,7 @@ function paintTrackRows(){
 
 function paintPlayBtn(){
   const b = barEl.querySelector('[data-bar="toggle"]');
+  barEl.classList.toggle("is-paused", audioEl.paused);   // freezes the sleeve's bars
   b.innerHTML = audioEl.paused ? SVG_PLAY : SVG_PAUSE;
   b.title = b.ariaLabel = audioEl.paused ? "Play" : "Pause";
   paintTrackRows();
@@ -1919,11 +1971,75 @@ barEl.addEventListener("click", ev => {
       (e && e.href && /^https?:/.test(e.href)
         ? '<a href="' + e.href + '" target="_blank" rel="noopener">Open on untitled.stream</a>' : "") +
       '<button data-bar="stop">Stop</button>';
+    const box = barEl.getBoundingClientRect();
+    barMenu.style.right  = Math.max(12, innerWidth - box.right) + "px";
+    barMenu.style.bottom = (innerHeight - box.top + 9) + "px";
     barMenu.classList.toggle("is-open", open);
     b.setAttribute("aria-expanded", String(open));
   }
   if(act === "notes"){ barMenu.classList.remove("is-open"); openDetail(qFrom); }
   if(act === "stop")  stopAudio();
+});
+
+/* Dragging. The tile is anchored by its right edge so opening grows leftward and
+   the sleeve never jumps, which means we store distances from the right and bottom
+   rather than left and top. Kept inside the viewport, clear of the rail. */
+const BAR_POS = "shen.bar.pos";
+
+function barLimits(){
+  const open = Math.min(430, innerWidth - 24);
+  const rail = railEl.offsetHeight;
+  return {
+    rMin: 12, rMax: Math.max(12, innerWidth - open - 12),
+    bMin: rail + 8, bMax: Math.max(rail + 8, innerHeight - 96)
+  };
+}
+
+function placeBar(r, b){
+  const L = barLimits();
+  r = Math.min(Math.max(r, L.rMin), L.rMax);
+  b = Math.min(Math.max(b, L.bMin), L.bMax);
+  barEl.style.setProperty("--bar-r", r + "px");
+  barEl.style.setProperty("--bar-b", b + "px");
+  barEl.classList.add("bar--placed");
+  try{ localStorage.setItem(BAR_POS, JSON.stringify({ r, b })); }catch(_){}
+}
+
+try{
+  const saved = JSON.parse(localStorage.getItem(BAR_POS) || "null");
+  if(saved) placeBar(saved.r, saved.b);
+}catch(_){}
+
+let drag = null;
+barEl.addEventListener("pointerdown", ev => {
+  if(ev.target.closest("button, a, .bar__seek")) return;   // controls come first
+  const box = barEl.getBoundingClientRect();
+  drag = {
+    id: ev.pointerId, x: ev.clientX, y: ev.clientY, moved: false,
+    r: innerWidth - box.right, b: innerHeight - box.bottom
+  };
+  barEl.setPointerCapture(ev.pointerId);
+});
+barEl.addEventListener("pointermove", ev => {
+  if(!drag || ev.pointerId !== drag.id) return;
+  const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+  if(!drag.moved && Math.hypot(dx, dy) < 4) return;        // a click is not a drag
+  drag.moved = true;
+  barEl.classList.add("is-dragging");
+  placeBar(drag.r - dx, drag.b - dy);
+});
+barEl.addEventListener("pointerup", ev => {
+  if(!drag || ev.pointerId !== drag.id) return;
+  barEl.releasePointerCapture(ev.pointerId);
+  barEl.classList.remove("is-dragging");
+  // a tap opens it, for touch and for anything else without a hover
+  if(!drag.moved) barEl.classList.toggle("is-open");
+  drag = null;
+});
+window.addEventListener("resize", () => {
+  if(!barEl.classList.contains("bar--placed")) return;
+  const box = barEl.getBoundingClientRect();
+  placeBar(innerWidth - box.right, innerHeight - box.bottom);
 });
 
 // click anywhere on the hairline to seek
@@ -1941,7 +2057,16 @@ audioEl.addEventListener("ended", () => nextTrack(1));
 audioEl.addEventListener("play", paintPlayBtn);
 audioEl.addEventListener("pause", paintPlayBtn);
 document.addEventListener("click", ev => {
-  if(!ev.target.closest("#bar")) barMenu.classList.remove("is-open");
+  if(!ev.target.closest("#bar") && !ev.target.closest("#barMenu"))
+    barMenu.classList.remove("is-open");
+});
+// the menu sits outside the tile now, so its own clicks need the same handler
+barMenu.addEventListener("click", ev => {
+  const b = ev.target.closest("[data-bar]");
+  if(!b) return;
+  barMenu.classList.remove("is-open");
+  if(b.dataset.bar === "notes") openDetail(qFrom);
+  if(b.dataset.bar === "stop")  stopAudio();
 });
 window.addEventListener("resize", measureRail);
 measureRail();
