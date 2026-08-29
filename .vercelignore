@@ -1,0 +1,12 @@
+# Only canvas_ver ships. Leading slashes matter: an unanchored "index.html"
+# would also match canvas_ver/index.html and drop the homepage.
+/claude_ver
+/assets
+/script.js
+/styles.css
+/index.html
+/dev-server.js
+/build-articles.js
+/articles.json
+/README.md
+/canvas_ver/articles/src

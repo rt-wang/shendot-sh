@@ -554,8 +554,19 @@ button{font:inherit;color:inherit}
 
 @media(max-width:720px){
   .titleblock{width:min(88vw,560px)}
-    .hint{display:none}
+  .hint{display:none}
   .detail__sheet{width:100%;border-left:0}
+
+  /* The top bar has to survive a phone: at full size the name wrapped to two
+     lines and the last button was pushed off the right edge. Recenter and Fit
+     all are the ones worth keeping on a small screen; Scatter and Tidy are
+     desk-bound play. */
+  .topbar{gap:8px;padding:0 12px}
+  .topbar__name{font-size:11px;white-space:nowrap}
+  .topbar__right{gap:6px}
+  .zoomreadout{display:none}
+  #btnScatter,#btnTidy{display:none}
+  .tool{padding:5px 8px;font-size:9px;white-space:nowrap}
 }
 @media(prefers-reduced-motion:reduce){
   #plane.is-eased{transition:none}
@@ -646,7 +657,6 @@ const ENTRIES = [
 
   {no:"B01", cat:"music", title:"大四", year:"2026", format:"Project · 10 tracks",
    cover:"covers/da-si.jpg",
-   blurb:"Liner note goes here — replace this line.",
    rows:[["Tracks","10"],["Runtime","20:05"],["Hosted","untitled.stream"]],
    tracks:[["四年","3:15"],["santa fe","1:48"],["yellow skin","1:36"],["FFT","2:32"],["bread and butter","1:22"],["圣诞节 just verse mix one","3:24"],["一坨坨","2:45"],["1999","1:12"],["玻璃","1:12"],["Lake Michagan","0:56"]],
    cta:"Play project", href:"https://untitled.stream/library/project/WQiCUlo6lzLfGC8azJvvv",
@@ -654,7 +664,6 @@ const ENTRIES = [
 
   {no:"B02", cat:"music", title:"Yearning to Be 惟有创造", year:"2026", format:"Project · 9 tracks",
    cover:"covers/yearning-to-be.jpg",
-   blurb:"Liner note goes here — replace this line.",
    rows:[["Tracks","9"],["Runtime","16:01"],["Hosted","untitled.stream"]],
    tracks:[["queen's gambit","1:15"],["sunset, too bright","2:08"],["自","1:36"],["back to you... [Interlude]","1:33"],["雨 (feat. 二流子）","2:15"],["written in fate","1:46"],["炙","1:39"],["解","2:05"],["absolutely devasted [Bonus]","1:39"]],
    cta:"Play project", href:"https://untitled.stream/library/project/HhtYUQtGtULyeRbIC68OU",
@@ -662,7 +671,6 @@ const ENTRIES = [
 
   {no:"B03", cat:"music", title:"san jo", year:"2026", format:"Project · 3 tracks",
    cover:"covers/san-jo.jpg",
-   blurb:"Liner note goes here — replace this line.",
    rows:[["Tracks","3"],["Runtime","4:21"],["Hosted","untitled.stream"]],
    tracks:[["孙学","1:05"],["黑玫瑰","1:46"],["周一","1:30"]],
    cta:"Play project", href:"https://untitled.stream/library/project/5C7X5OdSv7exRBySlCUGQ",
@@ -670,7 +678,6 @@ const ENTRIES = [
 
   {no:"B04", cat:"music", title:"untitled tape.", year:"2025", format:"Project · 10 tracks",
    cover:"covers/untitled-tape.jpg",
-   blurb:"Liner note goes here — replace this line.",
    rows:[["Tracks","10"],["Runtime","21:25"],["Hosted","untitled.stream"]],
    tracks:[["INTRO","0:20"],["INDEPENDENT","1:54"],["ICE","2:08"],["POLAROID","2:06"],["HYD","1:47"],["NUKE","1:57"],["FREESTYLE","3:08"],["FROLICK","3:13"],["'LONE","2:21"],["WAVY : OUTRO","2:26"]],
    cta:"Play project", href:"https://untitled.stream/library/project/0IvqgIIwmDo8w3AVRqgcV",
@@ -678,14 +685,12 @@ const ENTRIES = [
 
   {no:"B05", cat:"music", title:"words, jumbles, rumbles.", year:"2024", format:"Project · 3 tracks",
    cover:"covers/words-jumbles-rumbles.jpg",
-   blurb:"Liner note goes here — replace this line.",
    rows:[["Tracks","3"],["Runtime","5:02"],["Hosted","untitled.stream"]],
    tracks:[["rapsidy,","1:29"],["raw sex,","1:45"],["will, and conquer.","1:47"]],
    cta:"Play project", href:"https://untitled.stream/library/project/ctGNsoltqADGGjaxzdKBb",
    media:{type:"embed", src:"https://untitled.stream/embed/e0NVqzij5wyP", height:344}},
 
   {no:"C01", cat:"video", title:"doing bullshit in yuzawa.", year:"2026", format:"Video · 1:19",
-   blurb:"Liner note goes here — replace this line.",
    rows:[["Runtime","1:19"],["Published","2026"],["Host","YouTube"]],
    cta:"Watch on YouTube", href:"https://www.youtube.com/watch?v=gZVWKe9U4aA", date:"2026-01-07", tc:"1:19",
    thumb:"https://i.ytimg.com/vi/gZVWKe9U4aA/mqdefault.jpg",
@@ -693,7 +698,6 @@ const ENTRIES = [
    media:{type:"youtube", id:"gZVWKe9U4aA"}},
 
   {no:"C02", cat:"video", title:"art shall be free.", year:"2025", format:"Video · 1:07",
-   blurb:"Liner note goes here — replace this line.",
    rows:[["Runtime","1:07"],["Published","2025"],["Host","YouTube"]],
    cta:"Watch on YouTube", href:"https://www.youtube.com/watch?v=vM4lrtF17Eo", date:"2025-12-26", tc:"1:07",
    thumb:"https://i.ytimg.com/vi/vM4lrtF17Eo/mqdefault.jpg",
@@ -701,7 +705,6 @@ const ENTRIES = [
    media:{type:"youtube", id:"vM4lrtF17Eo"}},
 
   {no:"C03", cat:"video", title:"some chinese abstract hiphop for ya", year:"2025", format:"Video · 4:55",
-   blurb:"Liner note goes here — replace this line.",
    rows:[["Runtime","4:55"],["Published","2025"],["Host","YouTube"]],
    cta:"Watch on YouTube", href:"https://www.youtube.com/watch?v=-NoXh7z6SlI", date:"2025-02-06", tc:"4:55",
    thumb:"https://i.ytimg.com/vi/-NoXh7z6SlI/mqdefault.jpg",
@@ -709,7 +712,6 @@ const ENTRIES = [
    media:{type:"youtube", id:"-NoXh7z6SlI"}},
 
   {no:"C04", cat:"video", title:"NEVER BEEN ME — lyrics video", year:"2023", format:"Video · 2:45",
-   blurb:"Liner note goes here — replace this line.",
    rows:[["Runtime","2:45"],["Published","2023"],["Host","YouTube"]],
    cta:"Watch on YouTube", href:"https://www.youtube.com/watch?v=k6dPN8-Buks", date:"2023-03-25", tc:"2:45",
    thumb:"https://i.ytimg.com/vi/k6dPN8-Buks/mqdefault.jpg",
@@ -717,7 +719,6 @@ const ENTRIES = [
    media:{type:"youtube", id:"k6dPN8-Buks"}},
 
   {no:"C05", cat:"video", title:"Brown Video Portfolio", year:"2021", format:"Video · 1:54",
-   blurb:"Liner note goes here — replace this line.",
    rows:[["Runtime","1:54"],["Published","2021"],["Host","YouTube"]],
    cta:"Watch on YouTube", href:"https://www.youtube.com/watch?v=EGZrybdWqmE", date:"2021-01-14", tc:"1:54",
    thumb:"https://i.ytimg.com/vi/EGZrybdWqmE/mqdefault.jpg",
@@ -790,7 +791,7 @@ const CAT_SIZE = {code:250, music:250, video:268, writing:242, post:198};
    PLANE STATE
    ═══════════════════════════════════════════════════════ */
 
-const STORE_KEY = "shen.canvas.v4";
+const STORE_KEY = "shen.canvas.v5";   // v4 retired: it pinned visitors to a saved Tidy grid
 const MIN_SCALE = 0.28, MAX_SCALE = 2.6;
 const DRAG_SLOP = 5;            // px of movement before a click becomes a drag
 const HOVER_DELAY = 150;        // ms before a hover flips the sleeve
@@ -897,8 +898,9 @@ function tidyLayout(){
 function homeLayout(){
   const base = HOME_LAYOUT.slice(0, ENTRIES.length).map(o => ({ ...o }));
   if(base.length < ENTRIES.length){
-    const grid = tidyLayout();
-    while(base.length < ENTRIES.length) base.push(grid[base.length]);
+    // anything added since the capture joins the scatter, not a grid row
+    const rest = scatterLayout(20260829);
+    while(base.length < ENTRIES.length) base.push(rest[base.length]);
   }
   return base;
 }
@@ -912,9 +914,9 @@ function loadLayout(){
       // entries added since this session was saved get tidy positions appended,
       // rather than discarding the whole arrangement (and the title with it)
       if(raw.layout.length !== ENTRIES.length){
-        const grid = tidyLayout();
+        const rest = scatterLayout(20260829);
         raw.layout = raw.layout.slice(0, ENTRIES.length);
-        while(raw.layout.length < ENTRIES.length) raw.layout.push(grid[raw.layout.length]);
+        while(raw.layout.length < ENTRIES.length) raw.layout.push(rest[raw.layout.length]);
       }
       raw.head  = Array.isArray(raw.head) && raw.head.length === HOME_HEAD.length ? raw.head : null;
       raw.title = raw.title || null;
@@ -979,7 +981,7 @@ function sleeveHTML(e){
         '<div class="liner__scroll">' +
           '<div class="liner__top mono"><span>Liner notes</span><span>' + e.no + '</span></div>' +
           '<h3 class="liner__title">' + e.title + '</h3>' +
-          '<p class="liner__body">' + e.blurb + '</p>' +
+          (e.blurb ? '<p class="liner__body">' + e.blurb + '</p>' : "") +
           '<div class="liner__rows">' + rows + '</div>' +
         '</div>' +
         '<span class="liner__cta">' + e.cta + ' →</span>' +
@@ -1241,29 +1243,24 @@ function centerOn(px, py, scale){
   view.y = a.cy - py * s;
 }
 
-/* Everything on the plane, title block included. */
-function contentBox(){
+/* The masthead: the title block plus the headline words, which are separate
+   objects on the plane. EXCLUDE already tracks exactly these. */
+function mastheadBox(){
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   const eat = (x, y, w, h) => {
     minX = Math.min(minX, x);      minY = Math.min(minY, y);
     maxX = Math.max(maxX, x + w);  maxY = Math.max(maxY, y + h);
   };
-  layout.forEach(L => eat(L.x, L.y, L.size, L.size + 54));
   EXCLUDE.forEach(r => eat(r.x, r.y, r.w, r.h));
-  if(!isFinite(minX)) return { cx: 0, cy: 0, w: 1, h: 1 };
-  return { w: maxX - minX, h: maxY - minY,
-           cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+  if(!isFinite(minX)) eat(TITLE_POS.x, TITLE_POS.y, TITLE_W, TITLE_H);
+  return { cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
 }
 
-/* HOME_VIEW.scale stays the tuned zoom, but the pan is recomputed against the
-   real viewport, and on a very wide screen it scales up to fill instead of
-   hugging the left third. */
+/* Home lands on the title, at the tuned zoom. The pan is computed against the
+   live viewport rather than baked in, so it centres on any screen width. */
 function homeView(){
-  const a = freeArea(), box = contentBox();
-  const fit = Math.min(a.w * 0.86 / Math.max(box.w, 1),
-                       a.h * 0.86 / Math.max(box.h, 1));
-  const s = Math.max(HOME_VIEW.scale, Math.min(fit, MAX_SCALE));
-  return { scale: s, x: a.cx - box.cx * s, y: a.cy - box.cy * s };
+  const a = freeArea(), m = mastheadBox(), s = HOME_VIEW.scale;
+  return { scale: s, x: a.cx - m.cx * s, y: a.cy - m.cy * s };
 }
 
 /* Home: the title reading at full size, with the nearest sleeves around it. */
@@ -1587,7 +1584,7 @@ function openDetail(i){
     (e.tweetUrl
       ? '<div class="detail__tweet"><blockquote class="twitter-tweet" data-theme="dark" data-dnt="true">' +
         "<p>" + e.blurb + '</p><a href="' + e.tweetUrl + '"></a></blockquote></div>'
-      : '<p class="detail__blurb">' + e.blurb + "</p>") +
+      : e.blurb ? '<p class="detail__blurb">' + e.blurb + "</p>" : "") +
     mediaHTML(e) +
     '<div class="detail__rows">' + rows + "</div>" +
     tracks +
