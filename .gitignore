@@ -1,1 +1,6 @@
 .vercel
+
+# Claude Code session state, and the git worktrees it creates.
+# The worktree dir is its own checkout — committing it stores a gitlink that
+# means nothing to anyone cloning this repo.
+.claude/
