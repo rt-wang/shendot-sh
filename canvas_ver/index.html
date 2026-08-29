@@ -795,7 +795,7 @@ button{font:inherit;color:inherit}
 .deck--docked .deck__btn{
   width:30px;height:30px;padding:0;
   display:grid;place-items:center;
-  color:#FFF;border:0;background:transparent;
+  color:#FFF;border:0;background:transparent;cursor:pointer;
   opacity:.9;
   filter:drop-shadow(0 1px 3px rgba(0,0,0,.55));
   transition:transform .15s ease,opacity .15s ease;
@@ -845,15 +845,9 @@ button{font:inherit;color:inherit}
 .deck--docked:focus-within .deck__scrim{opacity:1}
 /* the player shows what is playing, so this is for screen readers only */
 .deck__now{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.deck__btn{
-  flex:0 0 auto;
-  border:1px solid rgba(19,21,25,.22);background:transparent;cursor:pointer;
-  border-radius:7px;
-  padding:5px 9px;
-  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
-  color:rgba(19,21,25,.55);
-}
-.deck__btn:hover{border-color:var(--ink);color:var(--ink)}
+/* the docked deck is the only place a deck button appears — see .deck--docked
+   .deck__btn above. the pane-era styles that used to live here repainted the
+   cross ink-dark on hover, which is invisible against the band. */
 /* the sheet owns the right side — when it is open, both step out of its way */
 .detail.is-open ~ .deck.deck--docked,
 .detail.is-open ~ .bar:not(.bar--placed){right:auto;left:var(--gutter)}
