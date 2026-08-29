@@ -793,15 +793,30 @@ button{font:inherit;color:inherit}
 .deck--docked:hover .deck__bar,
 .deck--docked:focus-within .deck__bar{opacity:1}
 .deck--docked .deck__btn{
-  width:26px;height:26px;padding:0;
+  width:30px;height:30px;padding:0;
   display:grid;place-items:center;
-  font-size:14px;line-height:1;
-  color:#FFF;border:0;background:none;
-  text-shadow:0 1px 4px rgba(0,0,0,.55);
-  transition:transform .14s ease,opacity .14s ease;
-  opacity:.85;
+  color:#FFF;border:0;background:transparent;border-radius:50%;
+  opacity:.9;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.55));
+  transition:transform .15s ease,opacity .15s ease,
+             background-color .15s ease,box-shadow .15s ease;
 }
-.deck--docked .deck__btn:hover{opacity:1;transform:scale(1.14)}
+.deck--docked .deck__btn svg{width:15px;height:15px;display:block}
+/* leaving is a decision — make it land under the cursor, not fade away */
+.deck--docked .deck__btn:hover,
+.deck--docked .deck__btn:focus-visible{
+  opacity:1;
+  transform:scale(1.2);
+  background:rgba(255,255,255,.18);
+  box-shadow:0 0 0 1px rgba(255,255,255,.55);
+}
+/* and the band under it deepens, so the whole corner reads as the way out */
+.deck--docked .deck__bar:hover ~ .deck__scrim--top{
+  background:linear-gradient(180deg,
+    rgba(20,21,24,.94) 0%,
+    rgba(20,21,24,.56) 52%,
+    rgba(20,21,24,0) 100%);
+}
 
 /* Instead of a button sitting on a plate: neutral-grey bands washing the top and
    bottom edges on hover, with the x living in the top one. They fade out into the
@@ -951,7 +966,10 @@ button{font:inherit;color:inherit}
 <div class="deck" id="deck">
   <div class="deck__bar">
     <span class="deck__now"></span>
-    <button class="deck__btn" data-deck="eject" title="Close" aria-label="Close">&#10005;</button>
+    <button class="deck__btn" data-deck="eject" title="Close" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.4" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+    </button>
   </div>
   <div class="deck__media"></div>
   <div class="deck__scrim deck__scrim--top"></div>
