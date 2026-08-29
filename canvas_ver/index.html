@@ -33,6 +33,7 @@
   --accent:#2320E8;        /* electric blue */
   --accent-deep:#1512A0;
   --accent-lift:#7C7AFF;   /* lifted, for use on the dark detail panel */
+  --tint-template:#7A4A22; /* plywood, sampled from the logo — see .face--template */
 
   --panel:#191919;
   --panel-line:#2C2C2C;
@@ -193,6 +194,13 @@ button{font:inherit;color:inherit}
 .face--video{background:var(--paper);color:var(--ink);border:1px solid var(--ink)}
 .face--writing{background:var(--paper);color:var(--ink);border:1px solid var(--ink)}
 .face--post{background:var(--ash);color:var(--ink);border:1px solid var(--ink)}
+/* An optional per-entry tint, set with `tint:"…"` on the entry. Overrides the
+   category colour, so it has to come after the faces above. canvas-catalog is
+   the template this page itself runs on — the one sleeve about the catalog
+   rather than in it — so it wears the plywood of the logo instead of ink. */
+.face--template{background:var(--tint-template);color:var(--paper)}
+/* the warm ground is lighter than ink, so the fragment needs a little more */
+.face--template .frag{opacity:.74}
 
 .cover__no{font-family:var(--mono);font-size:11px;letter-spacing:.12em;opacity:.75}
 .cover__title{
@@ -1030,7 +1038,7 @@ const ENTRIES = [
    cta:"Open repo", href:"https://github.com/rt-wang/visual-drums", date:"2026-04-13",
    frag:"\"gesture-drum-sequencer\"\n\n\"@mediapipe/tasks-vision\"\n\"tone\": \"^15.0.4\"\n\"react\": \"^18.3.1\""},
 
-  {no:"A06", cat:"code", title:"canvas-catalog", year:"2026", format:"Repository · HTML",
+  {no:"A06", cat:"code", tint:"template", title:"canvas-catalog", year:"2026", format:"Repository · HTML",
    blurb:"The template this page runs on: every work is a record sleeve on an infinite draggable plane. One static HTML file, one content file, no build step.",
    rows:[["Language","HTML"],["Stars","0"],["Source","GitHub"]],
    cta:"Open repo", href:"https://github.com/rt-wang/canvas-catalog", date:"2026-08-29",
@@ -1379,7 +1387,8 @@ function sleeveHTML(e){
   return '' +
   '<div class="sleeve">' +
     '<div class="sleeve__inner">' +
-      '<div class="face face--front face--' + e.cat + '">' +
+      '<div class="face face--front face--' + e.cat +
+          (e.tint ? " face--" + e.tint : "") + '">' +
         '<div class="spine"><span>' + e.no + ' · ' + e.year + '</span></div>' +
         '<div class="cover__no">' + e.no + '</div>' +
         coverArt(e) +
