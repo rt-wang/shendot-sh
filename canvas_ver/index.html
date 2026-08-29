@@ -593,6 +593,21 @@ button{font:inherit;color:inherit}
 /* nothing to link to yet — a ghost, not a faded button */
 .detail__cta--soon{background:transparent;border:1px solid var(--panel-line);color:var(--panel-soft);cursor:default}
 
+/* ══════════════ the reader ══════════════
+   An article is a real page: its own file, its own <head>, its own CSS, its own
+   URL, and landing on it directly still serves exactly that. What we cannot do
+   is *navigate* to it from here — a top-level navigation tears this document
+   down and takes barAudio with it. So the catalog frames the article instead
+   and pushes its real address. The bar outranks this at z 75, so the music
+   plays straight through and stays under your thumb while you read. */
+.reader{
+  position:fixed;inset:0;z-index:74;
+  background:var(--page);
+  display:none;
+}
+.reader.is-open{display:block}
+.reader__frame{display:block;width:100%;height:100%;border:0}
+
 /* ══════════════ the now-playing bar ══════════════
    our own transport over our own <audio>, because a cross-origin embed can be neither
    styled nor controlled. the <audio> lives in the bar and the bar never unmounts, so
@@ -928,6 +943,10 @@ button{font:inherit;color:inherit}
 
 <div class="detail" id="detail" role="dialog" aria-modal="true" aria-label="Entry detail">
   <div class="detail__sheet" id="detailSheet"></div>
+</div>
+
+<div class="reader" id="reader">
+  <iframe class="reader__frame" id="readerFrame" title="Article"></iframe>
 </div>
 
 <div class="bar" id="bar">
@@ -2656,10 +2675,127 @@ function measureTitle(){
 }
 
 /* ═══════════════════════════════════════════════════════
+   THE READER
+   ═══════════════════════════════════════════════════════ */
+
+/* Opening an article never navigates. It frames the article's own page and
+   pushes the article's own URL, so the address bar, the back button, sharing
+   and a direct visit all behave exactly as they would have — while this
+   document, and the <audio> inside it, stay alive. */
+
+const readerEl      = document.getElementById("reader");
+const readerFrame   = document.getElementById("readerFrame");
+const CATALOG_TITLE = document.title;
+let readerOpen = false;
+
+const ARTICLE_URL = /\/articles\/[^\/]+\.html$/;
+const CATALOG_URL = /(^|\/)index\.html$|\/$/;
+
+/* a same-origin link to an article, on a plain unmodified left click. anything
+   else — a new-tab click, an outside link — is left to the browser. */
+function readable(a, ev){
+  if(!a || a.target === "_blank") return null;
+  if(ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return null;
+  const u = new URL(a.getAttribute("href"), a.ownerDocument.baseURI);
+  if(u.origin !== location.origin) return null;
+  return u;
+}
+
+/* Point the frame at an article WITHOUT spending a history entry on it. A
+   frame's first load is a replacement already, but assigning .src to a frame
+   that has loaded once pushes an entry onto the joint session history — which
+   would make Back need two presses to leave an article. replace() does not. */
+let framedUrl = null;
+function frameTo(url){
+  const w = readerFrame.contentWindow;
+  if(framedUrl && w) w.location.replace(url);
+  else readerFrame.setAttribute("src", url);
+  framedUrl = url;
+}
+
+/* the tab is named by whatever is on screen */
+function syncTitle(){
+  const d = readerOpen ? readerFrame.contentDocument : null;
+  document.title = (d && d.title) || CATALOG_TITLE;
+}
+
+function openReader(url, push){
+  if(push) history.pushState({ reader: url }, "", url);
+  if(framedUrl !== url) frameTo(url);
+  readerEl.classList.add("is-open");
+  readerOpen = true;
+  /* when the frame already holds this page — Forward, or reopening the same
+     article — no load event is coming, so name the tab here instead of waiting */
+  syncTitle();
+  ejectDeck();          /* a video floating over an article is not wanted; music is */
+}
+
+function closeReader(){
+  if(!readerOpen) return;
+  readerEl.classList.remove("is-open");
+  readerOpen = false;
+  document.title = CATALOG_TITLE;
+  /* the frame keeps the page it holds: reopening the same article is instant,
+     and blanking it would cost exactly the history entry we just avoided */
+}
+
+/* The framed page is same-origin, so its own links can be kept honest: its
+   "← Catalog" returns to the canvas we are still holding rather than loading a
+   second copy of it inside the frame. */
+readerFrame.addEventListener("load", () => {
+  /* a frame that finishes loading after we already closed must not retitle the
+     tab — closing and reopening quickly otherwise leaves the article's name
+     sitting above the catalog. */
+  if(!readerOpen) return;
+  let d = null;
+  try{ d = readerFrame.contentDocument; }catch(_){ return; }
+  if(!d) return;
+
+  syncTitle();
+
+  d.querySelectorAll("a[href]").forEach(a => {
+    const u = new URL(a.getAttribute("href"), d.baseURI);
+    if(u.origin !== location.origin){ a.target = "_blank"; a.rel = "noopener"; }
+  });
+
+  d.addEventListener("click", ev => {
+    const u = readable(ev.target.closest && ev.target.closest("a[href]"), ev);
+    if(!u) return;
+    if(CATALOG_URL.test(u.pathname)){ ev.preventDefault(); history.back(); }
+    else if(ARTICLE_URL.test(u.pathname)){            /* article → article */
+      ev.preventDefault();
+      openReader(u.pathname + u.search + u.hash, true);
+    }
+  });
+
+  /* Esc still closes, even though the keystroke lands inside the frame. */
+  d.addEventListener("keydown", ev => { if(ev.key === "Escape") history.back(); });
+});
+
+/* every article link, wherever it is drawn — the detail CTA today, a blog index
+   tomorrow — opens here instead of navigating. */
+document.addEventListener("click", ev => {
+  const u = readable(ev.target.closest && ev.target.closest("a[href]"), ev);
+  if(!u || !ARTICLE_URL.test(u.pathname)) return;
+  ev.preventDefault();
+  openReader(u.pathname + u.search + u.hash, true);
+});
+
+window.addEventListener("popstate", ev => {
+  const url = ev.state && ev.state.reader;
+  if(url) openReader(url, false); else closeReader();
+});
+
+/* ═══════════════════════════════════════════════════════
    KEYBOARD
    ═══════════════════════════════════════════════════════ */
 
 document.addEventListener("keydown", ev => {
+  /* while reading, the canvas shortcuts are not the reader's to steal */
+  if(readerOpen){
+    if(ev.key === "Escape") history.back();
+    return;
+  }
   if(ev.key === "Escape"){
     if(detailEl.classList.contains("is-open")) closeDetail();
     else if(menuEl.classList.contains("is-open")) closeMenu();
