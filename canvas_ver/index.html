@@ -1321,25 +1321,33 @@ function homeLayout(){
 function loadLayout(){
   try{
     const raw = JSON.parse(localStorage.getItem(STORE_KEY));
-    if(raw && Array.isArray(raw.layout)){
-      topZ = raw.topZ || topZ;
-      // entries added since this session was saved get tidy positions appended,
-      // rather than discarding the whole arrangement (and the title with it)
-      if(raw.layout.length !== ENTRIES.length){
-        const rest = scatterLayout(20260829);
-        raw.layout = raw.layout.slice(0, ENTRIES.length);
-        while(raw.layout.length < ENTRIES.length) raw.layout.push(rest[raw.layout.length]);
-      }
-      /* A session saved while Tidy was on reopens as a grid forever, because the
-         grid went to storage as if it were the arrangement. Every other source
-         of a layout rotates its sleeves and tidyLayout() alone zeroes them, so
-         an all-zero rotation is that grid's signature: drop it back to the home
-         arrangement, keeping the headline and intro block where they were. */
-      if(raw.layout.length && raw.layout.every(o => o.rot === 0)) raw.layout = homeLayout();
-      raw.head  = Array.isArray(raw.head) && raw.head.length === HOME_HEAD.length ? raw.head : null;
-      raw.title = raw.title || null;
-      return raw;
-    }
+    if(!raw || !raw.layout) return null;
+    topZ = raw.topZ || topZ;
+
+    /* Sessions used to store the layout as a positional array, which silently
+       hands every sleeve its neighbour's place the moment an entry is inserted
+       anywhere but the end. Keyed by `no`, adding or reordering cannot disturb
+       it; a legacy array is still honoured, but only while its length agrees. */
+    const keyed = !Array.isArray(raw.layout);
+    const positional = !keyed && raw.layout.length === ENTRIES.length ? raw.layout : null;
+    const home = homeLayout();
+    let L = ENTRIES.map((e, i) => (keyed ? raw.layout[e.no] : positional && positional[i]) || home[i]);
+
+    /* A session saved while Tidy was on reopens as a grid forever, because the
+       grid went to storage as if it were the arrangement. Every other source of
+       a layout rotates its sleeves and tidyLayout() alone zeroes them, so an
+       all-zero rotation is that grid's signature: drop it back to home. */
+    if(L.length && L.every(o => o.rot === 0)) L = home;
+
+    /* A sleeve's size belongs to its ENTRY, not to the arrangement — it is just
+       CAT_SIZE[cat], and nothing on the plane ever changes it. Restoring a
+       stored one is what let a sleeve wear another category's dimensions after
+       the entry list shifted under a positional save. Always re-derive. */
+    raw.layout = L.map((o, i) => ({ ...o, size: CAT_SIZE[ENTRIES[i].cat] || 240 }));
+
+    raw.head  = Array.isArray(raw.head) && raw.head.length === HOME_HEAD.length ? raw.head : null;
+    raw.title = raw.title || null;
+    return raw;
   }catch(_){}
   return null;
 }
@@ -1347,8 +1355,11 @@ function loadLayout(){
 /* the words and the intro block are draggable too, so they persist as well */
 function saveLayout(){
   try{
+    const L = untidyLayout || baseLayout || layout;
+    const byNo = {};
+    ENTRIES.forEach((e, i) => { if(L[i]) byNo[e.no] = L[i]; });
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      layout: untidyLayout || baseLayout || layout, topZ,
+      layout: byNo, topZ,
       head: headNodes.map(el => ({ ...el._pos, size: parseFloat(el.style.fontSize) || 132 })),
       title: { x: TITLE_POS.x, y: TITLE_POS.y }
     }));
