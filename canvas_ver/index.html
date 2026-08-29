@@ -1744,7 +1744,12 @@ canvasEl.addEventListener("pointerdown", ev => {
     moved: false
   };
 
-  canvasEl.setPointerCapture(ev.pointerId);
+  /* A link inside a node stays a link. Capturing the pointer on the canvas
+     retargets the follow-up click to the canvas itself (WebKit and Chrome on
+     macOS both do this), so the href never fires. Skip the capture there: the
+     drag still tracks via pointermove, and a drag that moved already eats its
+     own click below. */
+  if(!ev.target.closest("a[href]")) canvasEl.setPointerCapture(ev.pointerId);
   if(!nodeEl) canvasEl.classList.add("is-panning");
 });
 
