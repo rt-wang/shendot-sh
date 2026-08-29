@@ -1,0 +1,1980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Shen's Catalog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Sedgwick+Ave+Display&family=Rubik+Wet+Paint&family=Kablammo&display=swap" rel="stylesheet">   <!-- TEMP: 4-9 are headline trials -->
+<style>
+/* Self-hosted from the user's own licence — see fonts/ */
+@font-face{
+  font-family:"ZT Formom";
+  src:url("fonts/ZTFormom-Regular.woff2") format("woff2");
+  font-weight:400; font-style:normal; font-display:swap;
+}
+@font-face{
+  font-family:"ZT Formom";
+  src:url("fonts/ZTFormom-Italic.woff2") format("woff2");
+  font-weight:400; font-style:italic; font-display:swap;
+}
+
+:root{
+  --page:#DAD9D4;
+  --paper:#EFEEEA;
+  --ash:#C6C5BF;
+  --ink:#131519;
+  --ink-soft:#6E6F6A;
+  --rule:#B9B8B2;
+  --accent:#2320E8;        /* electric blue */
+  --accent-deep:#1512A0;
+  --accent-lift:#7C7AFF;   /* lifted, for use on the dark detail panel */
+
+  --panel:#191919;
+  --panel-line:#2C2C2C;
+  --panel-text:#E8E7E3;
+  --panel-soft:#8F8F8F;
+
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Newsreader",Georgia,"Times New Roman",serif;
+  --mono:"Space Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  /* the big headline, swappable — see the FONTS trial block */
+  --hero-family:"ZT Formom","Archivo",sans-serif;
+  --hero-vf:normal;
+  --hero-weight:400;
+  --hero-style:italic;   /* option 2 — the drawn Italic cut */
+  --hero-size:118px;
+  --hero-lh:.84;
+  --hero-ls:-.01em;
+  --hero-tt:uppercase;
+
+  --gutter:clamp(18px,4vw,56px);
+  --bar:52px;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{
+  background:var(--page);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:17px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  touch-action:none;
+}
+a{color:inherit}
+button{font:inherit;color:inherit}
+
+.mono{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+/* ══════════════ the plane ══════════════ */
+
+#canvas{
+  position:fixed;
+  inset:0;
+  cursor:grab;
+  user-select:none;
+  -webkit-user-select:none;
+  background-image:radial-gradient(circle, rgba(19,21,25,.16) 1px, transparent 1px);
+  background-size:26px 26px;
+  background-position:0 0;
+}
+#canvas.is-panning{cursor:grabbing}
+
+#plane{
+  position:absolute;
+  top:0;left:0;
+  width:0;height:0;
+  transform-origin:0 0;
+  will-change:transform;
+}
+#plane.is-eased{transition:transform .58s cubic-bezier(.22,.72,.16,1)}
+
+/* every free-floating thing on the plane */
+.node{
+  position:absolute;
+  margin:0;
+  transform-origin:50% 50%;
+  cursor:grab;
+  user-select:none;
+  -webkit-user-select:none;
+  transition:opacity .3s ease, filter .3s ease;
+}
+.node.is-dragging{cursor:grabbing}
+.node.is-dimmed{opacity:.14;filter:saturate(.2);pointer-events:none}
+/* while a filter has gathered the matches, the rest step off the plane */
+.node.is-hidden{opacity:0;pointer-events:none}
+
+/* ══════════════ the sleeve ══════════════ */
+
+.sleeve{
+  width:100%;
+  aspect-ratio:1/1;
+  perspective:1400px;
+}
+.sleeve__inner{
+  position:relative;
+  width:100%;
+  height:100%;
+  transform-style:preserve-3d;
+  transition:transform .62s cubic-bezier(.2,.75,.2,1), box-shadow .3s ease;
+  box-shadow:0 2px 5px rgba(19,21,25,.14);
+}
+.node:hover .sleeve__inner{box-shadow:0 22px 46px rgba(19,21,25,.26)}
+.node.is-dragging .sleeve__inner{
+  box-shadow:0 34px 70px rgba(19,21,25,.34);
+  transition:box-shadow .18s ease;
+}
+.node.is-flipped .sleeve__inner{transform:rotateY(180deg)}
+.node:focus-visible{outline:none}
+.node:focus-visible .sleeve__inner{outline:2px solid var(--accent);outline-offset:5px}
+
+.face{
+  position:absolute;
+  inset:0;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.face--back{
+  transform:rotateY(180deg);
+  background:var(--paper);
+  border:1px solid var(--ink);
+  padding:16px;
+  justify-content:space-between;
+}
+
+.spine{
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:22px;
+  border-right:1px solid currentColor;
+  opacity:.5;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding-bottom:10px;
+}
+.spine span{
+  writing-mode:vertical-rl;
+  transform:rotate(180deg);
+  font-family:var(--mono);
+  font-size:9px;
+  letter-spacing:.18em;
+}
+
+.face--front{padding:16px 16px 16px 34px;justify-content:space-between}
+.face--code{background:var(--ink);color:var(--paper)}
+.face--music{background:var(--accent);color:var(--paper)}
+
+/* real sleeve art, full-bleed under the type */
+.art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.face--music:has(.art)::after{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg,
+    rgba(12,10,8,.58) 0%, rgba(12,10,8,0) 30%,
+    rgba(12,10,8,0) 46%, rgba(12,10,8,.88) 100%);
+}
+.face--music > *:not(.art):not(.spine){position:relative;z-index:2}
+.face--music .spine{z-index:2}
+.face--video{background:var(--paper);color:var(--ink);border:1px solid var(--ink)}
+.face--writing{background:var(--paper);color:var(--ink);border:1px solid var(--ink)}
+.face--post{background:var(--ash);color:var(--ink);border:1px solid var(--ink)}
+
+.cover__no{font-family:var(--mono);font-size:11px;letter-spacing:.12em;opacity:.75}
+.cover__title{
+  font-family:var(--display);
+  font-variation-settings:"wdth" 112,"wght" 800;
+  /* sleeves are not all one size (a post is 198px, a film 268px), so the
+     title scales with its own sleeve instead of overrunning the small ones */
+  font-size:calc(var(--sleeve, 250) * 0.092px);
+  overflow-wrap:break-word;
+  hyphens:auto;
+  line-height:.95;
+  letter-spacing:-.01em;
+  text-transform:uppercase;
+  margin:0;
+}
+.cover__foot{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+
+.frag{font-family:var(--mono);font-size:10px;line-height:1.7;opacity:.62;white-space:pre;overflow:hidden;margin:0}
+.disc{
+  align-self:center;width:46%;aspect-ratio:1;border-radius:50%;
+  border:1px solid currentColor;display:grid;place-items:center;position:relative;
+}
+.disc::before,.disc::after{content:"";position:absolute;border-radius:50%;border:1px solid currentColor;opacity:.45}
+.disc::before{inset:9%}
+.disc::after{inset:20%}
+.disc b{width:12%;aspect-ratio:1;border-radius:50%;background:currentColor;position:relative;z-index:1}
+.frame{flex:1;margin:10px 0;border-top:9px solid var(--ink);border-bottom:9px solid var(--ink);display:grid;place-items:center}
+.frame svg{width:34px;height:34px}
+.frame--still{display:block;overflow:hidden;min-height:0}
+.frame--still img{width:100%;height:100%;object-fit:cover;display:block}
+.pull{font-family:var(--body);font-size:17px;line-height:1.28;margin:0;max-width:22ch}
+.pull span{color:var(--accent)}
+.postmark{font-family:var(--display);font-variation-settings:"wdth" 62,"wght" 900;font-size:72px;line-height:.7;color:var(--accent)}
+
+/* liner back */
+.liner__top{display:flex;justify-content:space-between;color:var(--ink-soft)}
+.liner__title{
+  font-family:var(--display);
+  font-variation-settings:"wdth" 100,"wght" 750;
+  font-size:18px;line-height:1.05;text-transform:uppercase;margin:14px 0 8px;
+}
+.liner__body{font-size:14px;line-height:1.35;margin:0;color:#2A2C30}
+.liner__rows{
+  margin:12px 0 0;border-top:1px solid var(--rule);
+  font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-soft);
+}
+.liner__row{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--rule)}
+.liner__row b{color:var(--ink);font-weight:400}
+.liner__scroll{overflow:hidden;flex:1;min-height:0}
+.liner__cta{
+  margin-top:12px;display:inline-flex;align-items:center;gap:7px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);border-bottom:1px solid var(--accent);padding-bottom:2px;
+}
+
+/* caption under sleeve */
+.caption{padding-top:10px;pointer-events:none}
+.caption__title{font-family:var(--body);font-size:15px;line-height:1.2;margin:0 0 3px}
+.caption__meta{margin:0;color:var(--ink-soft);font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+
+/* ══════════════ title block on the plane ══════════════ */
+
+.titleblock{width:620px}
+
+/* each headline word is its own object on the plane */
+.word{
+  font-family:var(--hero-family);
+  font-variation-settings:var(--hero-vf);
+  font-weight:var(--hero-weight);
+  font-style:var(--hero-style);
+  line-height:.8;
+  letter-spacing:var(--hero-ls);
+  text-transform:var(--hero-tt);
+  white-space:nowrap;
+  color:var(--ink);
+  padding:.06em .04em;
+}
+.word--accent{color:var(--accent)}
+.word:hover{filter:drop-shadow(0 10px 18px rgba(19,21,25,.22))}
+.node.is-dragging.word{filter:drop-shadow(0 26px 40px rgba(19,21,25,.32))}
+.titleblock .eyebrow{color:var(--ink-soft);margin:0 0 18px}
+.titleblock .note{margin:26px 0 0;max-width:44ch;font-size:17px;line-height:1.45}
+.titleblock .note b{font-weight:600}
+.titleblock .note a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent)}
+.titleblock .note a:hover{color:var(--accent-deep);border-color:var(--accent-deep)}
+
+
+/* ══════════════ the period plug ══════════════ */
+
+/* Tucked against the right edge. Closed it is just its own readout; clicking
+   unrolls a long, tight strip. No card around it. */
+.plug{
+  position:fixed;
+  top:calc(var(--bar) + 13px);
+  right:var(--gutter);
+  z-index:30;
+  display:flex;flex-direction:column;align-items:flex-end;gap:6px;
+  user-select:none;
+}
+.plug__toggle{
+  all:unset;cursor:pointer;
+  font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-soft);
+  transition:color .18s ease;
+}
+.plug__toggle:hover{color:var(--ink)}
+.plug__toggle:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.plug.is-open .plug__toggle{color:var(--ink)}
+
+.plug__body{
+  width:320px;
+  opacity:0;
+  visibility:hidden;          /* authoritative: never a ghost mid-transition */
+  transform:translateY(-5px);
+  pointer-events:none;
+  transition:opacity .2s ease,
+             transform .22s cubic-bezier(.2,.75,.2,1),
+             visibility 0s linear .2s;
+}
+.plug.is-open .plug__body{
+  opacity:1;
+  visibility:visible;
+  transform:none;
+  pointer-events:auto;
+  transition-delay:0s;
+}
+
+.plug__strip{
+  position:relative;width:100%;height:11px;
+  background:rgba(239,238,234,.7);
+  cursor:ew-resize;
+  overflow:hidden;
+}
+.plug__wash{position:absolute;inset:0;pointer-events:none}
+.plug__band{
+  position:absolute;top:0;bottom:0;
+  background:rgba(19,21,25,.10);
+  border-left:1px solid var(--ink);
+  border-right:1px solid var(--ink);
+  pointer-events:none;
+  transition:left .2s cubic-bezier(.2,.75,.2,1),
+             width .2s cubic-bezier(.2,.75,.2,1),
+             opacity .2s ease;
+}
+.plug__scale{
+  display:flex;justify-content:space-between;
+  margin-top:3px;
+  font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--ink-soft);
+}
+
+@media(max-width:720px){
+  /* mobile just needs the work to show up */
+  .plug{display:none}
+}
+
+/* ══════════════ chrome ══════════════ */
+
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:30;
+  height:var(--bar);
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:0 var(--gutter);
+  background:rgba(218,217,212,.82);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--rule);
+  pointer-events:none;
+}
+.topbar > *{pointer-events:auto}
+.topbar__name{
+  font-family:var(--display);
+  font-variation-settings:"wdth" 118,"wght" 800;
+  font-size:14px;letter-spacing:.02em;text-transform:uppercase;
+}
+.topbar__right{display:flex;align-items:center;gap:10px;color:var(--ink-soft)}
+
+.tool{
+  border:1px solid var(--rule);
+  background:rgba(239,238,234,.7);
+  padding:6px 11px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;
+  transition:background .16s ease, border-color .16s ease, color .16s ease;
+}
+.tool:hover{background:var(--paper);border-color:var(--ink);color:var(--ink)}
+.tool[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+
+.zoomreadout{
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  color:var(--ink-soft);min-width:44px;text-align:right;
+}
+
+/* bottom rail: filters */
+.rail{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;
+  display:flex;align-items:stretch;
+  background:rgba(218,217,212,.9);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--rule);
+  overflow-x:auto;
+}
+.chip{
+  flex:1 0 auto;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:14px 20px;
+  border:0;border-right:1px solid var(--rule);
+  background:transparent;cursor:pointer;
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-soft);
+  transition:background .16s ease,color .16s ease;
+}
+.chip:hover:not(:disabled){background:var(--paper);color:var(--ink)}
+/* the pressed state has to out-rank :hover, or the active chip goes pale under the cursor */
+.chip[aria-pressed="true"]:not(:disabled){background:var(--ink);color:var(--paper)}
+.chip:disabled{opacity:.4;cursor:default}
+.chip .count{opacity:.6}
+
+/* hint, fades out */
+.hint{
+  position:fixed;left:50%;bottom:64px;transform:translateX(-50%);
+  z-index:29;
+  display:flex;gap:18px;align-items:center;
+  padding:9px 16px;
+  background:rgba(19,21,25,.9);
+  color:var(--panel-text);
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  pointer-events:none;
+  transition:opacity .6s ease;
+}
+.hint b{color:var(--accent-lift);font-weight:400}
+.hint.is-gone{opacity:0}
+
+/* TEMP — readout for the font (1-9) and headline-layout (Q) switches. */
+.accenttag{
+  position:fixed;left:var(--gutter);bottom:64px;z-index:29;
+  padding:7px 13px;
+  background:var(--accent);color:#FFF6F1;
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  opacity:0;transition:opacity .25s ease;pointer-events:none;
+}
+.accenttag.is-show{opacity:1}
+
+/* ══════════════ right-click menu ══════════════ */
+
+.ctxmenu{
+  position:fixed;z-index:60;
+  min-width:184px;
+  background:var(--paper);
+  border:1px solid var(--ink);
+  box-shadow:0 18px 40px rgba(19,21,25,.28);
+  display:none;
+  padding:4px 0;
+}
+.ctxmenu.is-open{display:block}
+.ctxmenu__head{
+  padding:8px 13px 9px;
+  border-bottom:1px solid var(--rule);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-soft);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ctxmenu button{
+  display:flex;width:100%;justify-content:space-between;gap:18px;
+  padding:8px 13px;border:0;background:transparent;text-align:left;cursor:pointer;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink);
+}
+.ctxmenu button:hover{background:var(--ink);color:var(--paper)}
+.ctxmenu button:hover kbd{color:var(--paper)}
+.ctxmenu kbd{font-family:var(--mono);font-size:9.5px;color:var(--ink-soft);background:none}
+
+/* ══════════════ detail page — dark, so the player sits flush in it ══════════════ */
+
+.detail{
+  position:fixed;inset:0;z-index:70;
+  display:none;
+  background:rgba(12,13,15,.66);
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+}
+.detail.is-open{display:block}
+.detail__sheet{
+  position:absolute;
+  top:0;right:0;bottom:0;
+  width:min(660px,100%);
+  background:var(--panel);
+  color:var(--panel-text);
+  border-left:1px solid var(--panel-line);
+  overflow-y:auto;
+  padding:clamp(24px,4vw,46px);
+  animation:slide .42s cubic-bezier(.2,.75,.2,1);
+  scrollbar-color:var(--panel-line) transparent;
+}
+@keyframes slide{from{transform:translateX(28px);opacity:0}to{transform:none;opacity:1}}
+
+.detail__close{
+  position:absolute;top:16px;right:clamp(24px,4vw,46px);
+  border:1px solid var(--panel-line);background:transparent;
+  padding:6px 11px;cursor:pointer;
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--panel-soft);
+}
+.detail__close:hover{border-color:var(--panel-soft);color:var(--panel-text)}
+
+.detail__no{
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-lift);
+}
+.detail__title{
+  font-family:var(--display);
+  font-variation-settings:"wdth" 116,"wght" 830;
+  font-size:clamp(32px,5vw,58px);
+  line-height:.9;letter-spacing:-.02em;text-transform:uppercase;
+  color:var(--panel-text);
+  margin:14px 0 0;
+}
+.detail__format{
+  margin:14px 0 0;
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--panel-soft);
+}
+.detail__blurb{margin:24px 0 0;font-size:19px;line-height:1.42;max-width:52ch;color:var(--panel-text)}
+.detail__alt{margin:10px 0 0;font-size:15px;line-height:1.4;color:var(--panel-soft);max-width:52ch}
+
+/* no wrapper chrome — the embed brings its own card, let it meet the sheet directly */
+.detail__media{margin:28px 0 0}
+.detail__media iframe,.detail__media video{display:block;width:100%;border:0;background:transparent}
+.detail__media iframe.yt{aspect-ratio:16/9;height:auto;background:#000}
+.detail__media video{border:1px solid var(--panel-line)}
+
+.detail__rows{
+  margin:28px 0 0;border-top:1px solid var(--panel-line);
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--panel-soft);
+}
+.detail__rows .liner__row{padding:9px 0;border-bottom:1px solid var(--panel-line)}
+.detail__rows .liner__row b{color:var(--panel-text)}
+
+.detail__tracks{margin:28px 0 0}
+.detail__tracks h4{
+  margin:0 0 10px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--panel-soft);font-weight:400;
+}
+.detail__track{
+  display:flex;justify-content:space-between;gap:16px;
+  padding:7px 0;border-bottom:1px solid var(--panel-line);
+  font-size:15px;color:var(--panel-text);
+}
+.detail__track span:last-child{font-family:var(--mono);font-size:11px;color:var(--panel-soft)}
+
+.detail__cta{
+  margin-top:30px;display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:#F7F2EE;background:var(--accent);padding:12px 18px;text-decoration:none;
+}
+.detail__cta:hover{background:var(--accent-deep)}
+/* nothing to link to yet — a ghost, not a faded button */
+.detail__cta--soon{background:transparent;border:1px solid var(--panel-line);color:var(--panel-soft);cursor:default}
+
+@media(max-width:720px){
+  .titleblock{width:min(88vw,560px)}
+    .hint{display:none}
+  .detail__sheet{width:100%;border-left:0}
+}
+@media(prefers-reduced-motion:reduce){
+  #plane.is-eased{transition:none}
+  .sleeve__inner{transition:none}
+  .detail__sheet{animation:none}
+}
+</style>
+</head>
+<body>
+
+<div id="canvas">
+  <div id="plane"></div>
+</div>
+
+<header class="topbar">
+  <span class="topbar__name">Shen's Catalog</span>
+  <div class="topbar__right">
+    <span class="zoomreadout" id="zoomReadout">100%</span>
+    <button class="tool" id="btnRecenter" title="Return to origin (0)">&#8982; Recenter</button>
+    <button class="tool" id="btnFit" title="Fit everything in view (F)">&#8865; Fit all</button>
+    <button class="tool" id="btnScatter" title="Re-scatter the plane">&#8623; Scatter</button>
+    <button class="tool" id="btnTidy" aria-pressed="false" title="Snap to a grid (T)">&#8862; Tidy</button>
+  </div>
+</header>
+
+<div class="plug" id="plug" aria-label="Filter by period">
+  <button class="plug__toggle" id="plugToggle" aria-expanded="false">All time</button>
+  <div class="plug__body">
+    <div class="plug__strip" id="plugStrip"></div>
+    <div class="plug__scale"><span id="plugLo"></span><span id="plugHi"></span></div>
+  </div>
+</div>
+<nav class="rail" id="rail" aria-label="Filter the canvas"></nav>
+
+<div class="hint" id="hint">
+  <span><b>drag</b> the ground to pan</span>
+  <span><b>drag</b> a sleeve to move it</span>
+  <span><b>hover</b> to read the back</span>
+  <span><b>click</b> to open</span>
+  <span><b>right-click</b> for more</span>
+</div>
+
+<div class="accenttag" id="accentTag"></div>
+
+<div class="ctxmenu" id="ctxmenu" role="menu"></div>
+
+<div class="detail" id="detail" role="dialog" aria-modal="true" aria-label="Entry detail">
+  <div class="detail__sheet" id="detailSheet"></div>
+</div>
+
+<script async src="https://platform.x.com/widgets.js" charset="utf-8"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   DATA
+   ═══════════════════════════════════════════════════════ */
+
+const ENTRIES = [
+  {no:"A01", cat:"code", title:"ob-shell", year:"2026", format:"Repository · Swift",
+   blurb:"Fast, local-first iOS companion for Obsidian vaults",
+   rows:[["Language","Swift"],["Stars","1"],["Source","GitHub"]],
+   cta:"Open repo", href:"https://github.com/rt-wang/ob-shell", date:"2026-06-23",
+   frag:"import SQLite3\n\nstruct SearchHit {\n  let path: String\n  let title: String\n}"},
+
+  {no:"A02", cat:"code", title:"br-studio", year:"2026", format:"Repository · JavaScript",
+   blurb:"AI-powered music section branching and arrangement tool",
+   rows:[["Language","JavaScript"],["Stars","0"],["Source","GitHub"]],
+   cta:"Open repo", href:"https://github.com/rt-wang/br-studio", date:"2026-04-22",
+   frag:"import { forkSection }\n  from './lib/api.js'\n\nexport default\nfunction App() {"},
+
+  {no:"A03", cat:"code", title:"Red-Planet", year:"2024", format:"Repository · Python",
+   blurb:"A retro sci-fi survival game in Pyxel — health, oxygen and food against the planet. Built with four teammates at the Uncommon Hackathon.",
+   rows:[["Language","Python"],["Built with","A team of 5"],["Source","GitHub"]],
+   cta:"Open repo", href:"https://github.com/rt-wang/Red-Planet", date:"2024-03-23",
+   frag:"class Player:\n  def __init__(self,\n      health=3, oxygen=5):\n    self._health = health\n    self._oxygen = oxygen"},
+
+  {no:"A04", cat:"code", title:"synesthetic_loop", year:"2026", format:"Repository · JavaScript",
+   blurb:"An image becomes sound and then an image again: k-means over the pixels, mapped onto a pentatonic score, read back by a model into a new picture.",
+   rows:[["Language","JavaScript"],["Stars","0"],["Source","GitHub"]],
+   cta:"Open repo", href:"https://github.com/rt-wang/synesthetic_loop", date:"2026-04-06",
+   frag:"// k-means on pixel data\n// in RGB space\nfunction runKMeans(\n    pixels, k = 5) {"},
+
+  {no:"A05", cat:"code", title:"visual-drums", year:"2026", format:"Repository · TypeScript",
+   blurb:"A drum sequencer you play with your hands. A webcam tracks a thumb-to-index pinch to toggle steps on a 5×16 grid laid over live video, with Tone.js keeping time.",
+   rows:[["Language","TypeScript"],["Stars","0"],["Source","GitHub"]],
+   cta:"Open repo", href:"https://github.com/rt-wang/visual-drums", date:"2026-04-13",
+   frag:"\"gesture-drum-sequencer\"\n\n\"@mediapipe/tasks-vision\"\n\"tone\": \"^15.0.4\"\n\"react\": \"^18.3.1\""},
+
+  {no:"B01", cat:"music", title:"大四", year:"2026", format:"Project · 10 tracks",
+   cover:"covers/da-si.jpg",
+   blurb:"Liner note goes here — replace this line.",
+   rows:[["Tracks","10"],["Runtime","20:05"],["Hosted","untitled.stream"]],
+   tracks:[["四年","3:15"],["santa fe","1:48"],["yellow skin","1:36"],["FFT","2:32"],["bread and butter","1:22"],["圣诞节 just verse mix one","3:24"],["一坨坨","2:45"],["1999","1:12"],["玻璃","1:12"],["Lake Michagan","0:56"]],
+   cta:"Play project", href:"https://untitled.stream/library/project/WQiCUlo6lzLfGC8azJvvv",
+   media:{type:"embed", src:"https://untitled.stream/embed/nTGmLelVqp0q", height:344}},
+
+  {no:"B02", cat:"music", title:"Yearning to Be 惟有创造", year:"2026", format:"Project · 9 tracks",
+   cover:"covers/yearning-to-be.jpg",
+   blurb:"Liner note goes here — replace this line.",
+   rows:[["Tracks","9"],["Runtime","16:01"],["Hosted","untitled.stream"]],
+   tracks:[["queen's gambit","1:15"],["sunset, too bright","2:08"],["自","1:36"],["back to you... [Interlude]","1:33"],["雨 (feat. 二流子）","2:15"],["written in fate","1:46"],["炙","1:39"],["解","2:05"],["absolutely devasted [Bonus]","1:39"]],
+   cta:"Play project", href:"https://untitled.stream/library/project/HhtYUQtGtULyeRbIC68OU",
+   media:{type:"embed", src:"https://untitled.stream/embed/gF709g3ZPU0U", height:344}},
+
+  {no:"B03", cat:"music", title:"san jo", year:"2026", format:"Project · 3 tracks",
+   cover:"covers/san-jo.jpg",
+   blurb:"Liner note goes here — replace this line.",
+   rows:[["Tracks","3"],["Runtime","4:21"],["Hosted","untitled.stream"]],
+   tracks:[["孙学","1:05"],["黑玫瑰","1:46"],["周一","1:30"]],
+   cta:"Play project", href:"https://untitled.stream/library/project/5C7X5OdSv7exRBySlCUGQ",
+   media:{type:"embed", src:"https://untitled.stream/embed/6EP3EYU7u5Yg", height:344}},
+
+  {no:"B04", cat:"music", title:"untitled tape.", year:"2025", format:"Project · 10 tracks",
+   cover:"covers/untitled-tape.jpg",
+   blurb:"Liner note goes here — replace this line.",
+   rows:[["Tracks","10"],["Runtime","21:25"],["Hosted","untitled.stream"]],
+   tracks:[["INTRO","0:20"],["INDEPENDENT","1:54"],["ICE","2:08"],["POLAROID","2:06"],["HYD","1:47"],["NUKE","1:57"],["FREESTYLE","3:08"],["FROLICK","3:13"],["'LONE","2:21"],["WAVY : OUTRO","2:26"]],
+   cta:"Play project", href:"https://untitled.stream/library/project/0IvqgIIwmDo8w3AVRqgcV",
+   media:{type:"embed", src:"https://untitled.stream/embed/nhT7QPuxr5sT", height:344}},
+
+  {no:"B05", cat:"music", title:"words, jumbles, rumbles.", year:"2024", format:"Project · 3 tracks",
+   cover:"covers/words-jumbles-rumbles.jpg",
+   blurb:"Liner note goes here — replace this line.",
+   rows:[["Tracks","3"],["Runtime","5:02"],["Hosted","untitled.stream"]],
+   tracks:[["rapsidy,","1:29"],["raw sex,","1:45"],["will, and conquer.","1:47"]],
+   cta:"Play project", href:"https://untitled.stream/library/project/ctGNsoltqADGGjaxzdKBb",
+   media:{type:"embed", src:"https://untitled.stream/embed/e0NVqzij5wyP", height:344}},
+
+  {no:"C01", cat:"video", title:"doing bullshit in yuzawa.", year:"2026", format:"Video · 1:19",
+   blurb:"Liner note goes here — replace this line.",
+   rows:[["Runtime","1:19"],["Published","2026"],["Host","YouTube"]],
+   cta:"Watch on YouTube", href:"https://www.youtube.com/watch?v=gZVWKe9U4aA", date:"2026-01-07", tc:"1:19",
+   thumb:"https://i.ytimg.com/vi/gZVWKe9U4aA/mqdefault.jpg",
+   ytTitle:"doing bullshit in yuzawa.",
+   media:{type:"youtube", id:"gZVWKe9U4aA"}},
+
+  {no:"C02", cat:"video", title:"art shall be free.", year:"2025", format:"Video · 1:07",
+   blurb:"Liner note goes here — replace this line.",
+   rows:[["Runtime","1:07"],["Published","2025"],["Host","YouTube"]],
+   cta:"Watch on YouTube", href:"https://www.youtube.com/watch?v=vM4lrtF17Eo", date:"2025-12-26", tc:"1:07",
+   thumb:"https://i.ytimg.com/vi/vM4lrtF17Eo/mqdefault.jpg",
+   ytTitle:"art shall be free.",
+   media:{type:"youtube", id:"vM4lrtF17Eo"}},
+
+  {no:"C03", cat:"video", title:"some chinese abstract hiphop for ya", year:"2025", format:"Video · 4:55",
+   blurb:"Liner note goes here — replace this line.",
+   rows:[["Runtime","4:55"],["Published","2025"],["Host","YouTube"]],
+   cta:"Watch on YouTube", href:"https://www.youtube.com/watch?v=-NoXh7z6SlI", date:"2025-02-06", tc:"4:55",
+   thumb:"https://i.ytimg.com/vi/-NoXh7z6SlI/mqdefault.jpg",
+   ytTitle:"some chinese abstract hiphop for ya",
+   media:{type:"youtube", id:"-NoXh7z6SlI"}},
+
+  {no:"C04", cat:"video", title:"NEVER BEEN ME — lyrics video", year:"2023", format:"Video · 2:45",
+   blurb:"Liner note goes here — replace this line.",
+   rows:[["Runtime","2:45"],["Published","2023"],["Host","YouTube"]],
+   cta:"Watch on YouTube", href:"https://www.youtube.com/watch?v=k6dPN8-Buks", date:"2023-03-25", tc:"2:45",
+   thumb:"https://i.ytimg.com/vi/k6dPN8-Buks/mqdefault.jpg",
+   ytTitle:"NEVER BEEN ME - lyrics video",
+   media:{type:"youtube", id:"k6dPN8-Buks"}},
+
+  {no:"C05", cat:"video", title:"Brown Video Portfolio", year:"2021", format:"Video · 1:54",
+   blurb:"Liner note goes here — replace this line.",
+   rows:[["Runtime","1:54"],["Published","2021"],["Host","YouTube"]],
+   cta:"Watch on YouTube", href:"https://www.youtube.com/watch?v=EGZrybdWqmE", date:"2021-01-14", tc:"1:54",
+   thumb:"https://i.ytimg.com/vi/EGZrybdWqmE/mqdefault.jpg",
+   ytTitle:"Brown Video Portfolio | class of 2025 [didn't get me into Brown, but got me into Uchicago]",
+   media:{type:"youtube", id:"EGZrybdWqmE"}},
+
+  {no:"D01", cat:"writing", kind:"Essay", title:"Nothing Behind the Practice", year:"2026", format:"Essay · 820 words",
+   blurb:"A defense of Wittgenstein's use account against its strongest challenge: that two speakers could share every use of a word and still differ inside.",
+   rows:[["Language","English"],["Length","820 words"],["Written","2026-05-21"]], date:"2026-05-21",
+   cta:"Read", href:"articles/nothing-behind-the-practice.html",
+   pull:"What gives the sign life is the <span>role</span> it plays."},
+
+  {no:"D02", cat:"writing", kind:"Essay", title:"Coherence, Not Truth", year:"2026", format:"Essay · 1,202 words",
+   blurb:"The meaning of life as a coherent system that anchors action, not a goal to reach. Agency lives in the constructing, not in the moment of choice.",
+   rows:[["Language","English"],["Length","1,202 words"],["Written","2026-05-19"]], date:"2026-05-19",
+   cta:"Read", href:"articles/coherence-not-truth.html",
+   pull:"We catch what's thrown at us and make <span>sculptures</span> out of it."},
+
+  {no:"D03", cat:"writing", kind:"Notes", title:"Legacy", year:"2026", format:"Notes · 637 characters",
+   blurb:"Legacy assumes a world that outlives you and a third party to score it. On synchronic and diachronic ways of judging a life — and why narrative has no ground under it.",
+   rows:[["Language","中文"],["Length","637 characters"],["Written","2026-03-24"]], date:"2026-03-24",
+   cta:"Read", href:"articles/legacy.html",
+   pull:"你在假设你死后存在的这个<span>世界</span>。"},
+
+  {no:"D04", cat:"writing", kind:"Note", title:"诗意把我钉在十字架上", year:"2026", format:"Note · 159 characters",
+   blurb:"Poetic moments arrive with a bitter undertone. On perception that finds suffering before it finds joy.",
+   rows:[["Language","中文"],["Length","159 characters"],["Written","2026-03-21"]], date:"2026-03-21",
+   cta:"Read", href:"articles/poetry-crucifix.html",
+   pull:"充满诗意的时刻时常有一丝<span>苦涩</span>的底色。"},
+
+  {no:"D05", cat:"writing", kind:"Prose", title:"西西里岛的风景依旧", year:"2025", format:"Prose · 5,687 characters",
+   blurb:"Three sections from Sicily: the coast road after class, the hill route home, and the five minutes that still lead to someone else's door.",
+   rows:[["Language","中文"],["Length","5,687 characters"],["Written","2025-04-06"]], date:"2025-04-06",
+   cta:"Read", href:"articles/sicily.html",
+   pull:"如果非要用一个词来形容，那一定是 <span>melancholic</span>。"},
+
+  {no:"D06", cat:"writing", kind:"Prose", title:"Prose 1", year:"2025", format:"Prose · 369 characters",
+   blurb:"Last train home, the greasy end of an office day, a two-minute walk in below-freezing wind. Breaks off mid-sentence.",
+   rows:[["Language","中文"],["Length","369 characters"],["Written","2025-01-19"]], date:"2025-01-19",
+   cta:"Read", href:"articles/prose-1.html",
+   pull:"loop 和我这两年都没什么<span>变化</span>。"},
+
+  {no:"D07", cat:"writing", kind:"Essay", title:"Critique Without an Anchor", year:"2024", format:"Essay · 2,369 words",
+   blurb:"Fraser says Foucault needs a normative framework to justify his rejection of modernity. A defense: the missing anchor is the critique, not a hole in it.",
+   rows:[["Language","English"],["Length","2,369 words"],["Written","2024-12-09"]], date:"2024-12-09",
+   cta:"Read", href:"articles/critique-without-an-anchor.html",
+   pull:"Critique is part and parcel of the <span>structures</span> it interrogates."},
+
+  {no:"E01", cat:"post", title:"A Data Problem, Not an Architecture Problem", year:"2026", format:"Thread · 5 posts",
+   blurb:"A five-post reply to the claim that LLMs are a dead end to superintelligence. The short version: the Einstein \u201cjump\u201d is a data-availability point, not a cognitive-architecture one \u2014 and richer data still gets compressed.",
+   rows:[["Platform","X"],["Length","5 posts"],["Topic","AI, compression"]],
+   cta:"Read thread", href:"https://x.com/shendottt/status/2085067906514378819",
+   date:"2026-08-05", tweetUrl:"https://x.com/shendottt/status/2085067906514378819"},
+
+];
+
+const CATS = [
+  {id:"all",     label:"All"},
+  {id:"code",    label:"Code"},
+  {id:"music",   label:"Music"},
+  {id:"video",   label:"Video"},
+  {id:"writing", label:"Writing"},
+  {id:"post",    label:"Posts"}
+];
+
+const CAT_NAME = {code:"Repository", music:"Recording", video:"Film", writing:"Essay", post:"Post"};
+const CAT_SIZE = {code:250, music:250, video:268, writing:242, post:198};
+
+/* ═══════════════════════════════════════════════════════
+   PLANE STATE
+   ═══════════════════════════════════════════════════════ */
+
+const STORE_KEY = "shen.canvas.v4";
+const MIN_SCALE = 0.28, MAX_SCALE = 2.6;
+const DRAG_SLOP = 5;            // px of movement before a click becomes a drag
+const HOVER_DELAY = 150;        // ms before a hover flips the sleeve
+
+const canvasEl   = document.getElementById("canvas");
+const planeEl    = document.getElementById("plane");
+const railEl     = document.getElementById("rail");
+const hintEl     = document.getElementById("hint");
+const menuEl     = document.getElementById("ctxmenu");
+const detailEl   = document.getElementById("detail");
+const detailSheet= document.getElementById("detailSheet");
+const zoomReadout= document.getElementById("zoomReadout");
+
+/* view = the plane's transform. Origin (0,0) in plane space is "home". */
+const view = { x: 0, y: 0, scale: 1 };
+
+/* one record per node: plane-space position, rotation, stacking order */
+let layout = [];
+let topZ = ENTRIES.length + 10;
+let activeCat = "all";
+
+/* Period continuum. Bounds are whole years, so "2024 to 2025" is exactly hittable;
+   the axis itself is continuous — each work sits at its real date. */
+const ENTRY_YEARS = ENTRIES.map(e => parseInt(e.year, 10));
+const YEAR_MIN = Math.min(...ENTRY_YEARS);
+const YEAR_MAX = Math.max(...ENTRY_YEARS);
+let fromYear = YEAR_MIN, toYear = YEAR_MAX;
+
+function isAllTime(){ return fromYear === YEAR_MIN && toYear === YEAR_MAX; }
+function inPeriod(e){ const y = parseInt(e.year, 10); return y >= fromYear && y <= toYear; }
+function visible(i){
+  const e = ENTRIES[i];
+  return (activeCat === "all" || e.cat === activeCat) && inPeriod(e);
+}
+let tidyMode = false;
+
+/* the title block is a plane citizen too — draggable, and scatter avoids it */
+const TITLE_POS = { x: -520, y: -160 };
+let EXCLUDE = [];                 /* rects the scatter must not land on */
+let TITLE_W = 1000, TITLE_H = 430;
+
+/* deterministic scatter so a reload looks the same unless you re-scatter */
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* Golden-angle spiral with jitter: an organic cluster that never stacks
+   two sleeves dead-on, and grows outward as the catalog grows. Anything
+   that lands on the title block gets pushed radially clear of it. */
+function scatterLayout(seed){
+  const rand = mulberry32(seed);
+  const GOLDEN = 2.399963229728653;
+  return ENTRIES.map((e, i) => {
+    const size = CAT_SIZE[e.cat] || 240;
+    const a = i * GOLDEN + rand() * 0.45;
+    let r = 330 * Math.sqrt(i + 1.15) * (0.88 + rand() * 0.26);
+    let x, y;
+    for(let guard = 0; guard < 24; guard++){
+      x = Math.cos(a) * r * 1.22 - size / 2;
+      y = Math.sin(a) * r * 0.94 - size / 2;
+      if(!overlapsTitle(x, y, size)) break;
+      r += 90;                       // shove it further out along its ray
+    }
+    return { x, y, rot: (rand() - 0.5) * 10, z: i + 1, size };
+  });
+}
+
+/* the headline words and the intro copy each carve out their own no-go rect */
+function overlapsTitle(x, y, size){
+  const M = 44, h = size + 54;       // sleeve + caption
+  return EXCLUDE.some(r =>
+    x < r.x + r.w + M && x + size > r.x - M &&
+    y < r.y + r.h + M && y + h    > r.y - M);
+}
+
+/* Tidy: the crate grid, hung directly off the bottom-left of the title block. */
+function tidyLayout(){
+  const COL = 4, CELL = 300, SIZE = 250;
+  /* The headline words live outside the title block's own box, so clearing
+     TITLE_H alone let the first row slide under them. */
+  let left = TITLE_POS.x, bottom = TITLE_POS.y + TITLE_H;
+  EXCLUDE.forEach(r => {
+    left   = Math.min(left, r.x);
+    bottom = Math.max(bottom, r.y + r.h);
+  });
+  const x0 = left;
+  const y0 = bottom + 70;
+  return ENTRIES.map((e, i) => ({
+    x: x0 + (i % COL) * CELL,
+    y: y0 + Math.floor(i / COL) * (SIZE + 100),
+    rot: 0,
+    z: i + 1,
+    size: SIZE
+  }));
+}
+
+/* HOME_LAYOUT is a captured arrangement. Entries added since it was captured
+   get tidy-grid positions appended, so every node has one. */
+function homeLayout(){
+  const base = HOME_LAYOUT.slice(0, ENTRIES.length).map(o => ({ ...o }));
+  if(base.length < ENTRIES.length){
+    const grid = tidyLayout();
+    while(base.length < ENTRIES.length) base.push(grid[base.length]);
+  }
+  return base;
+}
+
+/* Returns a saved session, or null for a first visit (-> the HOME arrangement). */
+function loadLayout(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(STORE_KEY));
+    if(raw && Array.isArray(raw.layout)){
+      topZ = raw.topZ || topZ;
+      // entries added since this session was saved get tidy positions appended,
+      // rather than discarding the whole arrangement (and the title with it)
+      if(raw.layout.length !== ENTRIES.length){
+        const grid = tidyLayout();
+        raw.layout = raw.layout.slice(0, ENTRIES.length);
+        while(raw.layout.length < ENTRIES.length) raw.layout.push(grid[raw.layout.length]);
+      }
+      raw.head  = Array.isArray(raw.head) && raw.head.length === HOME_HEAD.length ? raw.head : null;
+      raw.title = raw.title || null;
+      return raw;
+    }
+  }catch(_){}
+  return null;
+}
+
+/* the words and the intro block are draggable too, so they persist as well */
+function saveLayout(){
+  try{
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      layout: baseLayout || layout, topZ,
+      head: headNodes.map(el => ({ ...el._pos, size: parseFloat(el.style.fontSize) || 132 })),
+      title: { x: TITLE_POS.x, y: TITLE_POS.y }
+    }));
+  }catch(_){}
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER
+   ═══════════════════════════════════════════════════════ */
+
+/* Cover titles set at a size relative to their own sleeve. A title carrying a
+   very long word (ARCHITECTURE, SYNESTHETIC_LOOP) steps down until the word
+   fits, rather than letting break-word snap it in half. */
+function coverTitlePx(title){
+  const longest = Math.max(...String(title).split(/\s+/).map(w => w.length), 1);
+  const shrink = longest > 9 ? Math.max(0.6, 9 / longest) : 1;
+  return "calc(var(--sleeve, 250) * " + (0.092 * shrink).toFixed(4) + "px)";
+}
+
+function coverArt(e){
+  if(e.cat === "code")    return '<pre class="frag">' + e.frag + '</pre>';
+  if(e.cat === "music")   return e.cover
+    ? '<img class="art" src="' + e.cover + '" alt="" decoding="async">'
+    : '<div class="disc"><b></b></div>';
+  if(e.cat === "video")   return e.thumb
+    ? '<div class="frame frame--still"><img src="' + e.thumb + '" alt="" decoding="async"></div>'
+    : '<div class="frame"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>';
+  if(e.cat === "writing") return '<p class="pull">' + e.pull + '</p>';
+  return '<div class="postmark">&ldquo;</div>';
+}
+
+function sleeveHTML(e){
+  const rows = e.rows.map(r => '<div class="liner__row"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>').join("");
+  return '' +
+  '<div class="sleeve">' +
+    '<div class="sleeve__inner">' +
+      '<div class="face face--front face--' + e.cat + '">' +
+        '<div class="spine"><span>' + e.no + ' · ' + e.year + '</span></div>' +
+        '<div class="cover__no">' + e.no + '</div>' +
+        coverArt(e) +
+        '<div>' +
+          '<h3 class="cover__title" style="font-size:' + coverTitlePx(e.title) + '">' +
+            e.title + '</h3>' +
+          '<div class="cover__foot">' + (e.cat === "video" ? e.tc : (e.kind || CAT_NAME[e.cat])) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="face face--back">' +
+        '<div class="liner__scroll">' +
+          '<div class="liner__top mono"><span>Liner notes</span><span>' + e.no + '</span></div>' +
+          '<h3 class="liner__title">' + e.title + '</h3>' +
+          '<p class="liner__body">' + e.blurb + '</p>' +
+          '<div class="liner__rows">' + rows + '</div>' +
+        '</div>' +
+        '<span class="liner__cta">' + e.cta + ' →</span>' +
+      '</div>' +
+    '</div>' +
+  '</div>' +
+  '<div class="caption">' +
+    '<p class="caption__title">' + e.title + '</p>' +
+    '<p class="caption__meta">' + e.format + ' · ' + e.year + '</p>' +
+  '</div>';
+}
+
+const titleNode = document.createElement("div");
+titleNode.className = "node titleblock";
+titleNode.dataset.kind = "title";
+titleNode.innerHTML =
+  '<p class="eyebrow mono">Catalog 2021—2026 · San Jose, CA · drag anything</p>' +
+  '<p class="note">Hi! I work as a software engineer in the Bay Area during the day, and create ' +
+  '<a href="https://linktr.ee/shendot" target="_blank" rel="noopener">weird art</a> the rest of ' +
+  'the time — music, hip-hop especially, and digital art. ' +
+  '<b>Have a look at what I&rsquo;ve built.</b> Every entry is a sleeve on the front and notes on ' +
+  'the back. Drag anything; nothing is pinned to a grid.</p>';
+planeEl.appendChild(titleNode);
+titleNode._pos = TITLE_POS;
+
+/* ── the headline is not a text box. Every word is its own thing on the
+   plane: own size, own angle, own position, draggable like a sleeve. ── */
+const HEAD_WORDS = [
+  { t: "Here\u2019s", accent: false },
+  { t: "What",         accent: false },
+  { t: "I",            accent: true  },
+  { t: "Create.",      accent: true  }
+];
+
+const headNodes = HEAD_WORDS.map((w, i) => {
+  const el = document.createElement("div");
+  el.className = "node word" + (w.accent ? " word--accent" : "");
+  el.dataset.kind = "word";
+  el.dataset.index = i;
+  el.textContent = w.t;
+  el._pos = { x: 0, y: 0, rot: 0, z: 40 + i };
+  planeEl.appendChild(el);
+  return el;
+});
+
+const nodes = ENTRIES.map((e, i) => {
+  const el = document.createElement("article");
+  el.className = "node";
+  el.dataset.index = i;
+  el.dataset.cat = e.cat;
+  el.dataset.kind = "entry";
+  el.tabIndex = 0;
+  el.setAttribute("role", "button");
+  el.setAttribute("aria-label", e.title + " — hover to read the back, click to open");
+  el.innerHTML = sleeveHTML(e);
+  planeEl.appendChild(el);
+  return el;
+});
+
+
+/* ═══════════════════════════════════════════════════════
+   HOME — the arrangement the site opens on. Captured from
+   a hand-placed layout; every number is a plane coordinate.
+   Scatter / Tidy still recompute freely from here.
+   ═══════════════════════════════════════════════════════ */
+
+const HOME_VIEW  = { x: 1243.5, y: 823.331, scale: 0.866297 };
+const HOME_TITLE = { x: -520, y: -366.36 };
+
+const HOME_HEAD = [
+  { x: -649.547, y: -574.203, rot: -11, size: 132, z: 40 },
+  { x: -320.162, y: -669.831, rot:   9, size: 158, z: 41 },
+  { x: -473.201, y: -446.075, rot: -23, size: 129, z: 42 },
+  { x: -350.092, y: -483.162, rot:   6, size: 193, z: 43 }
+];
+
+const HOME_LAYOUT = [
+  { x:   294.726, y:   -92.8814, rot: -1.57769,  z:  1, size: 250 },
+  { x:  -670.607, y:    35.8343, rot:  3.78556,  z:  2, size: 250 },
+  { x:   346.376, y: -1013.74,   rot:  3.2171,   z:  3, size: 250 },
+  { x:   159.392, y:   454.316,  rot:  4.74418,  z:  4, size: 250 },
+  { x: -1008.1,   y:  -379.369,  rot: -0.536068, z:  5, size: 250 },
+  { x:   916.331, y:  -456.237,  rot: -0.651645, z:  6, size: 250 },
+  { x:  -504.488, y:   722.346,  rot: -4.55322,  z:  7, size: 250 },
+  { x:  -586.523, y: -1101.05,   rot: -4.49933,  z:  8, size: 250 },
+  { x:   827.988, y:   482.44,   rot: -3.76754,  z:  9, size: 250 },
+  { x: -1460.32,  y:   156.47,   rot: -1.97841,  z: 10, size: 250 },
+  { x:   454.88,  y: -1018.38,   rot: -3.54674,  z: 11, size: 268 },
+  { x:   -64.9921,y:  1020.44,   rot: -3.07849,  z: 12, size: 268 },
+  { x: -1323.93,  y:  -964.232,  rot: -0.217357, z: 13, size: 268 },
+  { x:  1414.57,  y:    64.1792, rot:  4.50774,  z: 14, size: 268 },
+  { x: -1045.4,   y:   740.841,  rot: -0.865016, z: 15, size: 268 },
+  { x:   301.593, y: -1270.92,   rot: -4.54133,  z: 16, size: 242 },
+  { x:  1205.37,  y:   816.171,  rot:  1.64853,  z: 17, size: 242 },
+  { x: -1673.15,  y:  -357.603,  rot: -4.99685,  z: 18, size: 242 },
+  { x:  1190.83,  y: -1020.9,    rot: -3.19904,  z: 19, size: 198 },
+  { x:  -872.59,  y:  1218.5,    rot: -1.93502,  z: 20, size: 198 }
+];
+
+function applyHome(){
+  HOME_HEAD.forEach((h, i) => {
+    const el = headNodes[i];
+    el.style.fontSize = h.size + "px";
+    Object.assign(el._pos, h);
+  });
+  TITLE_POS.x = HOME_TITLE.x;
+  TITLE_POS.y = HOME_TITLE.y;
+  paintFree();
+  rebuildExclude();
+}
+
+const HEAD_MODES = ["toss", "chaos", "cascade", "upright", "stack"];
+let headMode = 0;
+
+/* Positions come from the words' *measured* widths, not from numbers I guessed —
+   so every mode survives a font change or an edit to the copy. */
+function layoutHead(mode){
+  const BASE = 132;
+  const cfg = {
+    toss:    { size:[1.00, 1.20, 0.98, 1.46], rot:[-11,   9, -23,  6] },
+    /* never put -90 on "I" — one letter on its side just reads as a dash.
+       The sideways trick belongs on a multi-letter word (see upright). */
+    chaos:   { size:[1.06, 0.84, 1.22, 1.58], rot:[-26,  17, -52,  8] },
+    cascade: { size:[1.00, 1.00, 1.00, 1.14], rot:[ -5,  -2,   3,  7] },
+    upright: { size:[1.00, 0.94, 1.00, 1.34], rot:[  0, -90,   0,  0] },
+    stack:   { size:[1.00, 1.00, 1.00, 1.00], rot:[  0,   0,   0,  0] }
+  }[mode] || {};
+
+  headNodes.forEach((el, i) => { el.style.fontSize = Math.round(BASE * cfg.size[i]) + "px"; });
+  const W = headNodes.map(el => el.offsetWidth);
+  const H = headNodes.map(el => el.offsetHeight);
+
+  const X0 = -520, Y0 = -700;
+  let pos;
+
+  if(mode === "stack"){
+    pos = []; let x = X0, y = Y0;
+    headNodes.forEach((el, i) => {
+      if(i > 0 && x + W[i] > X0 + 1040){ x = X0; y += H[i] * 0.9; }
+      pos.push({ x, y });
+      x += W[i] + BASE * 0.17;
+    });
+  } else if(mode === "cascade"){
+    pos = []; let x = X0, y = Y0;
+    headNodes.forEach((el, i) => { pos.push({ x, y }); x += W[i] * 0.30; y += H[i] * 0.80; });
+  } else if(mode === "upright"){
+    /* lay the three horizontal words first, then swing the turned one clear
+       of the widest of them — otherwise it lands on top of "Create." */
+    const yI = Y0 + H[0] * 0.98;
+    const xC = X0 + W[2] + BASE * 0.22;
+    const rightEdge = Math.max(X0 + W[0], xC + W[3]);
+    pos = [];
+    pos[0] = { x: X0, y: Y0 };
+    pos[2] = { x: X0, y: yI };
+    pos[3] = { x: xC, y: yI - H[3] * 0.06 };
+    pos[1] = { x: rightEdge + 110 - W[1] / 2 + H[1] / 2, y: Y0 + W[1] / 2 - H[1] / 2 };
+  } else if(mode === "chaos"){
+    /* nothing lines up with anything: each word gets its own corner */
+    pos = [
+      { x: X0 + 60,                  y: Y0 },
+      { x: X0 + W[0] * 1.02,         y: Y0 + H[1] * 0.95 },
+      { x: X0 - 40,                  y: Y0 + H[0] * 1.35 },
+      { x: X0 + W[2] * 0.9 + 120,    y: Y0 + H[0] * 1.6 }
+    ];
+  } else {  /* toss */
+    pos = [
+      { x: X0,                       y: Y0 },
+      { x: X0 + W[0] * 0.88,         y: Y0 - H[1] * 0.50 },
+      { x: X0 + 30,                  y: Y0 + H[0] * 1.10 },
+      { x: X0 + W[2] * 1.8 + 60,     y: Y0 + H[0] * 0.84 }
+    ];
+  }
+
+  headNodes.forEach((el, i) => {
+    el._pos.x = pos[i].x; el._pos.y = pos[i].y; el._pos.rot = cfg.rot[i];
+  });
+
+  /* park the intro copy just under whatever shape the words ended up in */
+  let bottom = -Infinity, left = Infinity;
+  headNodes.forEach((el, i) => {
+    bottom = Math.max(bottom, el._pos.y + H[i]);
+    left   = Math.min(left,   el._pos.x);
+  });
+  TITLE_POS.x = X0;
+  TITLE_POS.y = bottom + 54;
+
+  paintFree();
+
+  rebuildExclude();
+}
+
+/* rotated words sweep a bigger box than their set width — pad for it */
+function rebuildExclude(){
+  EXCLUDE = headNodes.map(el => {
+    const w = el.offsetWidth, h = el.offsetHeight;
+    const pad = Math.abs(el._pos.rot) > 45 ? Math.max(w, h) * 0.5 : 0;
+    return { x: el._pos.x - pad, y: el._pos.y - pad, w: w + pad * 2, h: h + pad * 2 };
+  });
+  EXCLUDE.push({ x: TITLE_POS.x, y: TITLE_POS.y,
+                 w: titleNode.offsetWidth, h: titleNode.offsetHeight });
+}
+
+/* every free-floating chrome node paints from its own _pos */
+function paintFree(){
+  [titleNode].concat(headNodes).forEach(el => {
+    const P = el._pos;
+    el.style.transform =
+      "translate3d(" + P.x + "px," + P.y + "px,0)" + (P.rot ? " rotate(" + P.rot + "deg)" : "");
+    if(P.z) el.style.zIndex = P.z;
+  });
+}
+
+function paintNodes(){
+  paintFree();
+  nodes.forEach((el, i) => {
+    const L = layout[i];
+    el.style.width = L.size + "px";
+    el.style.setProperty("--sleeve", L.size);
+    el.style.transform = "translate3d(" + L.x + "px," + L.y + "px,0) rotate(" + L.rot + "deg)";
+    el.style.zIndex = L.z;
+  });
+}
+
+function paintView(){
+  planeEl.style.transform =
+    "translate3d(" + view.x + "px," + view.y + "px,0) scale(" + view.scale + ")";
+  canvasEl.style.backgroundSize = (26 * view.scale) + "px " + (26 * view.scale) + "px";
+  canvasEl.style.backgroundPosition = view.x + "px " + view.y + "px";
+  zoomReadout.textContent = Math.round(view.scale * 100) + "%";
+}
+
+/* ═══════════════════════════════════════════════════════
+   VIEW MOVEMENT
+   ═══════════════════════════════════════════════════════ */
+
+function ease(fn){
+  planeEl.classList.add("is-eased");
+  fn();
+  paintView();
+  clearTimeout(ease._t);
+  ease._t = setTimeout(() => planeEl.classList.remove("is-eased"), 620);
+}
+
+/* The usable band sits between the fixed topbar and the fixed filter rail. */
+function freeArea(){
+  const top = document.querySelector(".topbar").offsetHeight;
+  const bot = railEl.offsetHeight;
+  return { top, bot, cx: window.innerWidth / 2,
+           cy: top + (window.innerHeight - top - bot) / 2,
+           w: window.innerWidth, h: window.innerHeight - top - bot };
+}
+
+/* Put plane-space point (px,py) at the centre of that band. */
+function centerOn(px, py, scale){
+  const a = freeArea();
+  const s = scale != null ? scale : view.scale;
+  view.scale = s;
+  view.x = a.cx - px * s;
+  view.y = a.cy - py * s;
+}
+
+/* Everything on the plane, title block included. */
+function contentBox(){
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const eat = (x, y, w, h) => {
+    minX = Math.min(minX, x);      minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x + w);  maxY = Math.max(maxY, y + h);
+  };
+  layout.forEach(L => eat(L.x, L.y, L.size, L.size + 54));
+  EXCLUDE.forEach(r => eat(r.x, r.y, r.w, r.h));
+  if(!isFinite(minX)) return { cx: 0, cy: 0, w: 1, h: 1 };
+  return { w: maxX - minX, h: maxY - minY,
+           cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+}
+
+/* HOME_VIEW.scale stays the tuned zoom, but the pan is recomputed against the
+   real viewport, and on a very wide screen it scales up to fill instead of
+   hugging the left third. */
+function homeView(){
+  const a = freeArea(), box = contentBox();
+  const fit = Math.min(a.w * 0.86 / Math.max(box.w, 1),
+                       a.h * 0.86 / Math.max(box.h, 1));
+  const s = Math.max(HOME_VIEW.scale, Math.min(fit, MAX_SCALE));
+  return { scale: s, x: a.cx - box.cx * s, y: a.cy - box.cy * s };
+}
+
+/* Home: the title reading at full size, with the nearest sleeves around it. */
+function recenter(){
+  const v = homeView();
+  ease(() => { view.x = v.x; view.y = v.y; view.scale = v.scale; });
+}
+
+function fitAll(){
+  const boxes = layout
+    .filter((L, i) => visible(i))
+    .map(L => ({ x: L.x, y: L.y, w: L.size, h: L.size + 54 }));
+  if(activeCat === "all" && isAllTime())
+    EXCLUDE.forEach(r => boxes.push({ x: r.x, y: r.y, w: r.w, h: r.h }));
+  if(!boxes.length) return;
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  boxes.forEach(b => {
+    minX = Math.min(minX, b.x);         minY = Math.min(minY, b.y);
+    maxX = Math.max(maxX, b.x + b.w);   maxY = Math.max(maxY, b.y + b.h);
+  });
+
+  const a = freeArea(), pad = 80;
+  const s = Math.max(MIN_SCALE, Math.min(MAX_SCALE,
+    Math.min((a.w - pad * 2) / (maxX - minX), (a.h - pad * 2) / (maxY - minY))));
+  ease(() => centerOn((minX + maxX) / 2, (minY + maxY) / 2, s));
+}
+
+function zoomAt(clientX, clientY, factor){
+  const next = Math.max(MIN_SCALE, Math.min(MAX_SCALE, view.scale * factor));
+  if(next === view.scale) return;
+  /* keep the point under the cursor pinned while the scale changes */
+  view.x = clientX - (clientX - view.x) * (next / view.scale);
+  view.y = clientY - (clientY - view.y) * (next / view.scale);
+  view.scale = next;
+  paintView();
+}
+
+/* ═══════════════════════════════════════════════════════
+   HOVER FLIP
+   ═══════════════════════════════════════════════════════ */
+
+let hoverTimer = null;
+let suppressHover = false;   // true while panning or dragging
+
+function flip(el, on){
+  el.classList.toggle("is-flipped", on);
+}
+
+function clearFlips(){
+  nodes.forEach(el => el.classList.remove("is-flipped"));
+}
+
+nodes.forEach(el => {
+  el.addEventListener("pointerenter", ev => {
+    if(ev.pointerType !== "mouse") return;
+    if(suppressHover) return;
+    clearTimeout(hoverTimer);
+    hoverTimer = setTimeout(() => { if(!suppressHover) flip(el, true); }, HOVER_DELAY);
+  });
+  el.addEventListener("pointerleave", ev => {
+    if(ev.pointerType !== "mouse") return;
+    clearTimeout(hoverTimer);
+    flip(el, false);
+  });
+  /* keyboard: Enter opens, Space flips */
+  el.addEventListener("keydown", ev => {
+    if(ev.key === "Enter"){ ev.preventDefault(); openDetail(+el.dataset.index); }
+    if(ev.key === " "){ ev.preventDefault(); flip(el, !el.classList.contains("is-flipped")); }
+  });
+  el.addEventListener("focus", () => flip(el, true));
+  el.addEventListener("blur",  () => flip(el, false));
+});
+
+/* ═══════════════════════════════════════════════════════
+   POINTER: pan the ground, drag a node, click to open
+   ═══════════════════════════════════════════════════════ */
+
+let gesture = null;                  // active single-pointer gesture
+const pointers = new Map();          // for pinch
+
+/* one accessor for "where does this node live on the plane" */
+function posOf(el){
+  if(!el) return null;
+  return el.dataset.kind === "entry" ? layout[+el.dataset.index] : el._pos;
+}
+
+canvasEl.addEventListener("pointerdown", ev => {
+  if(ev.button === 2) return;        // right-click handled separately
+  pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+  if(pointers.size === 2){ beginPinch(); return; }
+  if(pointers.size > 1) return;
+
+  closeMenu();
+  const nodeEl = ev.target.closest(".node");
+
+  gesture = {
+    id: ev.pointerId,
+    node: nodeEl,
+    index: nodeEl && nodeEl.dataset.kind === "entry" ? +nodeEl.dataset.index : -1,
+    pos: posOf(nodeEl),
+    startX: ev.clientX,
+    startY: ev.clientY,
+    originX: nodeEl ? posOf(nodeEl).x : view.x,
+    originY: nodeEl ? posOf(nodeEl).y : view.y,
+    moved: false
+  };
+
+  canvasEl.setPointerCapture(ev.pointerId);
+  if(!nodeEl) canvasEl.classList.add("is-panning");
+});
+
+canvasEl.addEventListener("pointermove", ev => {
+  if(pointers.has(ev.pointerId)) pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+  if(pointers.size === 2){ updatePinch(); return; }
+  if(!gesture || ev.pointerId !== gesture.id) return;
+
+  const dx = ev.clientX - gesture.startX;
+  const dy = ev.clientY - gesture.startY;
+
+  if(!gesture.moved && Math.hypot(dx, dy) < DRAG_SLOP) return;
+
+  if(!gesture.moved){
+    gesture.moved = true;
+    suppressHover = true;
+    clearTimeout(hoverTimer);
+    dismissHint();
+    const sel = window.getSelection(); if(sel) sel.removeAllRanges();
+    if(gesture.node){
+      gesture.node.classList.add("is-dragging");
+      flip(gesture.node, false);              // a drag cancels the flip
+      if(gesture.index >= 0){
+        layout[gesture.index].z = ++topZ;      // grabbed thing comes to the top
+        gesture.node.style.zIndex = topZ;
+      }
+    }
+  }
+
+  if(gesture.node){
+    /* screen delta → plane delta */
+    const P = gesture.pos;
+    P.x = gesture.originX + dx / view.scale;
+    P.y = gesture.originY + dy / view.scale;
+    gesture.node.style.transform =
+      "translate3d(" + P.x + "px," + P.y + "px,0)" + (P.rot ? " rotate(" + P.rot + "deg)" : "");
+  }else{
+    view.x = gesture.originX + dx;
+    view.y = gesture.originY + dy;
+    paintView();
+  }
+});
+
+function endGesture(ev){
+  pointers.delete(ev.pointerId);
+  if(pointers.size < 2) pinch = null;
+  if(!gesture || ev.pointerId !== gesture.id) return;
+
+  canvasEl.classList.remove("is-panning");
+  if(gesture.node) gesture.node.classList.remove("is-dragging");
+
+  /* a drag that started on a link must not also fire that link's click */
+  if(gesture.moved){
+    const eat = ev2 => ev2.preventDefault();
+    document.addEventListener("click", eat, { capture: true, once: true });
+    setTimeout(() => document.removeEventListener("click", eat, true), 0);
+  }
+
+  if(!gesture.moved && gesture.index >= 0){
+    openDetail(gesture.index);                 // a click that never became a drag
+  }else if(gesture.moved && gesture.node){
+    if(gesture.index >= 0){
+      tidyMode = false;
+      document.getElementById("btnTidy").setAttribute("aria-pressed", "false");
+    }else{
+      rebuildExclude();          // a moved word changes where a re-scatter may land
+    }
+    saveLayout();
+  }
+
+  gesture = null;
+  suppressHover = false;
+}
+
+canvasEl.addEventListener("pointerup", endGesture);
+canvasEl.addEventListener("pointercancel", endGesture);
+
+/* ── pinch to zoom ── */
+let pinch = null;
+function pinchState(){
+  const p = [...pointers.values()];
+  return { dist: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y),
+           cx: (p[0].x + p[1].x) / 2, cy: (p[0].y + p[1].y) / 2 };
+}
+function beginPinch(){
+  gesture = null;
+  canvasEl.classList.remove("is-panning");
+  suppressHover = true;
+  pinch = pinchState();
+}
+function updatePinch(){
+  if(!pinch) return;
+  const now = pinchState();
+  if(pinch.dist > 0) zoomAt(now.cx, now.cy, now.dist / pinch.dist);
+  pinch = now;
+}
+
+/* ── wheel: trackpad pans, ctrl/cmd+wheel zooms ── */
+canvasEl.addEventListener("wheel", ev => {
+  ev.preventDefault();
+  dismissHint();
+  if(ev.ctrlKey || ev.metaKey){
+    zoomAt(ev.clientX, ev.clientY, Math.exp(-ev.deltaY * 0.0075));
+  }else{
+    view.x -= ev.deltaX;
+    view.y -= ev.deltaY;
+    paintView();
+  }
+}, { passive: false });
+
+/* ═══════════════════════════════════════════════════════
+   RIGHT-CLICK MENU
+   ═══════════════════════════════════════════════════════ */
+
+canvasEl.addEventListener("contextmenu", ev => {
+  ev.preventDefault();
+  const nodeEl = ev.target.closest(".node");
+  if(nodeEl && nodeEl.dataset.kind === "entry"){
+    openMenu(ev.clientX, ev.clientY, +nodeEl.dataset.index);
+  }else{
+    openMenu(ev.clientX, ev.clientY, -1);
+  }
+});
+
+function openMenu(x, y, index){
+  clearFlips();
+  const e = index >= 0 ? ENTRIES[index] : null;
+  const items = e
+    ? [["Open detail",      "open"],
+       ["Bring to front",   "front"],
+       ["Send to back",     "back"],
+       ["Straighten",       "straighten"],
+       ["Send here",        "here"]]
+    : [["Recenter",         "recenter"],
+       ["Fit all",          "fit"],
+       ["Re-scatter",       "scatter"],
+       ["Reset zoom",       "zoom1"]];
+
+  menuEl.innerHTML =
+    '<div class="ctxmenu__head">' + (e ? e.no + " · " + e.title : "Canvas") + "</div>" +
+    items.map(it => '<button data-act="' + it[1] + '">' + it[0] + "</button>").join("");
+  menuEl.dataset.index = index;
+  menuEl.classList.add("is-open");
+
+  /* keep it on screen */
+  const r = menuEl.getBoundingClientRect();
+  menuEl.style.left = Math.min(x, window.innerWidth  - r.width  - 8) + "px";
+  menuEl.style.top  = Math.min(y, window.innerHeight - r.height - 8) + "px";
+}
+
+function closeMenu(){ menuEl.classList.remove("is-open"); }
+
+menuEl.addEventListener("click", ev => {
+  const btn = ev.target.closest("button");
+  if(!btn) return;
+  const i = +menuEl.dataset.index;
+  const act = btn.dataset.act;
+
+  if(act === "open")       openDetail(i);
+  if(act === "front"){     layout[i].z = ++topZ; nodes[i].style.zIndex = topZ; saveLayout(); }
+  if(act === "back"){      layout.forEach(L => L.z += 1); layout[i].z = 1; paintNodes(); saveLayout(); }
+  if(act === "straighten"){layout[i].rot = 0; paintNodes(); saveLayout(); }
+  if(act === "here"){
+    /* drop it at the centre of the current view */
+    const L = layout[i];
+    L.x = (window.innerWidth / 2 - view.x) / view.scale - L.size / 2;
+    L.y = (window.innerHeight / 2 - view.y) / view.scale - L.size / 2;
+    L.z = ++topZ;
+    paintNodes(); saveLayout();
+  }
+  if(act === "recenter")   recenter();
+  if(act === "fit")        fitAll();
+  if(act === "scatter")    doScatter();
+  if(act === "zoom1")      ease(() => zoomAt(window.innerWidth / 2, window.innerHeight / 2, 1 / view.scale));
+
+  closeMenu();
+});
+
+/* ═══════════════════════════════════════════════════════
+   DETAIL PAGE
+   ═══════════════════════════════════════════════════════ */
+
+function mediaHTML(e){
+  if(!e.media) return "";
+  if(e.media.type === "youtube"){
+    return '<div class="detail__media"><iframe class="yt" src="https://www.youtube.com/embed/' + e.media.id +
+           '" title="" loading="lazy" allowfullscreen ' +
+           'allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe></div>';
+  }
+  if(e.media.type === "embed"){
+    return '<div class="detail__media"><iframe src="' + e.media.src + '" height="' + e.media.height +
+           '" loading="lazy" allow="autoplay; clipboard-write; encrypted-media"></iframe></div>';
+  }
+  return '<div class="detail__media"><video src="' + e.media.src + '" controls preload="metadata" playsinline></video></div>';
+}
+
+function openDetail(i){
+  const e = ENTRIES[i];
+  const rows = e.rows.map(r => '<div class="liner__row"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>').join("");
+  const tracks = e.tracks
+    ? '<div class="detail__tracks"><h4>Tracklist</h4>' +
+      e.tracks.map(t => '<div class="detail__track"><span>' + t[0] + '</span><span>' + t[1] + '</span></div>').join("") +
+      "</div>"
+    : "";
+
+  detailSheet.innerHTML =
+    '<button class="detail__close" id="detailClose">Close · Esc</button>' +
+    '<p class="detail__no">' + e.no + " · " + CAT_NAME[e.cat] + "</p>" +
+    '<h2 class="detail__title">' + e.title + "</h2>" +
+    '<p class="detail__format">' + e.format + " · " + e.year + "</p>" +
+    (e.ytTitle && e.ytTitle !== e.title ? '<p class="detail__alt">' + e.ytTitle + "</p>" : "") +
+    (e.tweetUrl
+      ? '<div class="detail__tweet"><blockquote class="twitter-tweet" data-theme="dark" data-dnt="true">' +
+        "<p>" + e.blurb + '</p><a href="' + e.tweetUrl + '"></a></blockquote></div>'
+      : '<p class="detail__blurb">' + e.blurb + "</p>") +
+    mediaHTML(e) +
+    '<div class="detail__rows">' + rows + "</div>" +
+    tracks +
+    (e.href && e.href !== "#"
+      ? '<a class="detail__cta" href="' + e.href + '"' +
+        (/^https?:/.test(e.href) ? ' target="_blank" rel="noopener"' : "") +
+        '>' + e.cta + " →</a>"
+      : '<span class="detail__cta detail__cta--soon">' + e.cta + " — soon</span>");
+
+  detailEl.classList.add("is-open");
+  // the sheet is rebuilt each time, so the widget has to be asked to render again
+  if(e.tweetUrl && window.twttr && twttr.widgets) twttr.widgets.load(detailSheet);
+  document.getElementById("detailClose").addEventListener("click", closeDetail);
+  detailSheet.scrollTop = 0;
+  clearFlips();
+}
+
+function closeDetail(){
+  detailEl.classList.remove("is-open");
+  detailSheet.innerHTML = "";   // stops any playing embed
+}
+
+detailEl.addEventListener("pointerdown", ev => {
+  if(ev.target === detailEl) closeDetail();
+});
+
+/* ═══════════════════════════════════════════════════════
+   FILTER RAIL
+   ═══════════════════════════════════════════════════════ */
+
+CATS.forEach(c => {
+  const n = c.id === "all" ? ENTRIES.length : ENTRIES.filter(e => e.cat === c.id).length;
+  const b = document.createElement("button");
+  b.className = "chip";
+  b.dataset.cat = c.id;
+  if(c.soon){
+    b.disabled = true;
+    b.innerHTML = "<span>" + c.label + '</span><span class="count">[soon]</span>';
+  }else{
+    b.setAttribute("aria-pressed", String(c.id === "all"));
+    b.innerHTML = "<span>" + c.label + '</span><span class="count">[' + n + "]</span>";
+  }
+  railEl.appendChild(b);
+});
+
+railEl.addEventListener("click", ev => {
+  const chip = ev.target.closest(".chip");
+  if(!chip || chip.disabled) return;
+  activeCat = chip.dataset.cat;
+  railEl.querySelectorAll(".chip:not(:disabled)").forEach(c =>
+    c.setAttribute("aria-pressed", String(c.dataset.cat === activeCat)));
+  applyFilters();
+});
+
+/* ═══════════════════════════════════════════════════════
+   THE PERIOD PLUG — when, not what
+   ═══════════════════════════════════════════════════════ */
+
+const plugEl    = document.getElementById("plug");
+const stripEl   = document.getElementById("plugStrip");
+const toggleEl  = document.getElementById("plugToggle");
+const Y_LO = YEAR_MIN, Y_HI = YEAR_MAX + 1;      // half-open: [2021, 2027)
+const SPAN = Y_HI - Y_LO;
+
+document.getElementById("plugLo").textContent = Y_LO;
+document.getElementById("plugHi").textContent = YEAR_MAX;
+
+function frac(e){
+  if(e.date){
+    const [y, m, d] = e.date.split("-").map(Number);
+    return y + ((m - 1) + (d - 1) / 31) / 12;
+  }
+  return parseInt(e.year, 10) + 0.5;            // year-only entries sit mid-year
+}
+function leftPct(f){ return (f - Y_LO) / SPAN * 100; }
+
+/* a wash, not ticks — smoothed density so clusters read as weight */
+function buildWash(){
+  const fs = ENTRIES.map(frac);
+  const N = 64, sigma = 0.34;
+  const stops = [];
+  let vals = [];
+  for(let i = 0; i < N; i++){
+    const f = Y_LO + (i / (N - 1)) * SPAN;
+    let acc = 0;
+    for(const x of fs){ const d = (x - f) / sigma; acc += Math.exp(-0.5 * d * d); }
+    vals.push(acc);
+  }
+  const peak = Math.max(...vals) || 1;
+  vals.forEach((v, i) => stops.push(
+    "rgba(19,21,25," + (0.05 + 0.42 * Math.pow(v / peak, 0.9)).toFixed(3) + ") " +
+    (i / (N - 1) * 100).toFixed(2) + "%"));
+  const wash = document.createElement("div");
+  wash.className = "plug__wash";
+  wash.style.background = "linear-gradient(to right," + stops.join(",") + ")";
+  stripEl.appendChild(wash);
+}
+buildWash();
+
+const bandEl = document.createElement("div");
+bandEl.className = "plug__band";
+stripEl.appendChild(bandEl);
+
+function paintPeriod(){
+  const l = leftPct(fromYear), r = leftPct(toYear + 1);
+  bandEl.style.left    = l + "%";
+  bandEl.style.width   = (r - l) + "%";
+  bandEl.style.opacity = isAllTime() ? "0" : "1";
+  toggleEl.textContent = isAllTime() ? "All time"
+    : fromYear === toYear ? String(fromYear)
+    : fromYear + " — " + toYear;
+}
+
+/* The arrangement as it stood before a filter gathered things up. */
+let baseLayout = null;
+
+/* A filter should collect the work, not just dim it — otherwise fitting a
+   scattered box zooms out until nothing is readable. */
+function gatherMatches(idx){
+  if(!baseLayout) baseLayout = layout.map(o => ({ ...o }));
+  const a = freeArea();
+  const CELL = 300, ROW = 350;
+  const cols = Math.max(1, Math.min(idx.length,
+    Math.round(Math.sqrt(idx.length * Math.max(a.w / Math.max(a.h, 1), 0.4)))));
+  const rows = Math.ceil(idx.length / cols);
+  const w = (cols - 1) * CELL, h = (rows - 1) * ROW;
+  idx.forEach((n, k) => {
+    const L = layout[n];
+    L.x = -w / 2 + (k % cols) * CELL;
+    L.y = -h / 2 + Math.floor(k / cols) * ROW;
+    L.rot = 0;
+  });
+}
+
+function releaseMatches(){
+  if(baseLayout){ layout = baseLayout; baseLayout = null; }
+}
+
+function applyFilters(){
+  const narrowed = activeCat !== "all" || !isAllTime();
+  const idx = ENTRIES.map((e, i) => i).filter(visible);
+  const gathering = narrowed && idx.length > 0;
+
+  if(gathering) gatherMatches(idx); else releaseMatches();
+  nodes.forEach((el, i) => el.classList.toggle("is-hidden", narrowed && !visible(i)));
+  // the masthead would sit on top of the gathered grid, so it steps aside too
+  [titleNode].concat(headNodes).forEach(el => el.classList.toggle("is-hidden", gathering));
+
+  paintPeriod();
+  planeEl.classList.add("is-eased");
+  paintNodes();
+  if(gathering) fitAll(); else recenter();
+  clearTimeout(applyFilters._t);
+  applyFilters._t = setTimeout(() => planeEl.classList.remove("is-eased"), 640);
+}
+
+/* drag either end; lands on whole years, but eases rather than snaps */
+let dragging = null;
+
+function boundaryAt(clientX){
+  const r = stripEl.getBoundingClientRect();
+  const f = Y_LO + ((clientX - r.left) / r.width) * SPAN;
+  return Math.max(Y_LO, Math.min(Y_HI, Math.round(f)));
+}
+function moveEnd(which, b){
+  if(which === "hi") toYear   = Math.min(YEAR_MAX, Math.max(b - 1, fromYear));
+  else               fromYear = Math.max(YEAR_MIN, Math.min(b, toYear));
+  applyFilters();
+}
+
+stripEl.addEventListener("pointerdown", ev => {
+  ev.preventDefault();
+  const b = boundaryAt(ev.clientX);
+  dragging = Math.abs(b - (toYear + 1)) <= Math.abs(b - fromYear) ? "hi" : "lo";
+  moveEnd(dragging, b);
+});
+document.addEventListener("pointermove", ev => {
+  if(dragging) moveEnd(dragging, boundaryAt(ev.clientX));
+});
+document.addEventListener("pointerup", () => { dragging = null; });
+
+function resetPeriod(){
+  fromYear = YEAR_MIN; toYear = YEAR_MAX;
+  applyFilters();
+}
+stripEl.addEventListener("dblclick", resetPeriod);
+
+/* closed by default; the readout is the handle */
+toggleEl.addEventListener("click", () => {
+  const open = plugEl.classList.toggle("is-open");
+  toggleEl.setAttribute("aria-expanded", String(open));
+});
+document.addEventListener("pointerdown", ev => {
+  if(!plugEl.contains(ev.target)){
+    plugEl.classList.remove("is-open");
+    toggleEl.setAttribute("aria-expanded", "false");
+  }
+}, true);
+
+function syncRailHeight(){
+  document.documentElement.style.setProperty("--railh", railEl.offsetHeight + "px");
+}
+syncRailHeight();
+window.addEventListener("resize", () => {
+  syncRailHeight();
+  // the plug is hidden on narrow screens; never leave an invisible filter on
+  if(window.innerWidth <= 720 && !isAllTime()) resetPeriod();
+});
+paintPeriod();
+
+/* ═══════════════════════════════════════════════════════
+   TOOLBAR
+   ═══════════════════════════════════════════════════════ */
+
+function doScatter(){
+  tidyMode = false;
+  document.getElementById("btnTidy").setAttribute("aria-pressed", "false");
+  layout = scatterLayout(Date.now() % 100000);
+  topZ = ENTRIES.length + 10;
+  nodes.forEach(el => el.style.transition = "transform .55s cubic-bezier(.2,.75,.2,1)");
+  paintNodes();
+  setTimeout(() => nodes.forEach(el => el.style.transition = ""), 600);
+  saveLayout();
+}
+
+function doTidy(){
+  tidyMode = !tidyMode;
+  document.getElementById("btnTidy").setAttribute("aria-pressed", String(tidyMode));
+  layout = tidyMode ? tidyLayout() : scatterLayout(20260828);
+  nodes.forEach(el => el.style.transition = "transform .55s cubic-bezier(.2,.75,.2,1)");
+  paintNodes();
+  setTimeout(() => nodes.forEach(el => el.style.transition = ""), 600);
+  saveLayout();
+  recenter();          /* snap the grid, but stay at reading size — "Fit all" is the overview */
+}
+
+document.getElementById("btnRecenter").addEventListener("click", recenter);
+document.getElementById("btnFit").addEventListener("click", fitAll);
+document.getElementById("btnScatter").addEventListener("click", doScatter);
+document.getElementById("btnTidy").addEventListener("click", doTidy);
+
+/* ═══════════════════════════════════════════════════════
+   TEMP — headline typeface trial. Press 1-9.
+   Delete this block once the face is chosen.
+   ═══════════════════════════════════════════════════════ */
+
+const FONTS = [
+  { key:"1", name:"ZT Formom",              fam:'"ZT Formom",sans-serif', vf:"normal", w:400, st:"normal",  size:"118px", lh:".84", ls:"-.01em", tt:"uppercase" },
+  { key:"2", name:"ZT Formom Italic",       fam:'"ZT Formom",sans-serif', vf:"normal", w:400, st:"italic",  size:"118px", lh:".84", ls:"-.01em", tt:"uppercase" },
+  { key:"3", name:"ZT Formom · lowercase",  fam:'"ZT Formom",sans-serif', vf:"normal", w:400, st:"normal",  size:"126px", lh:".82", ls:"-.02em", tt:"lowercase" },
+  { key:"4", name:"Archivo (was default)",  fam:'"Archivo",sans-serif',   vf:'"wdth" 122,"wght" 850', w:850, st:"normal", size:"104px", lh:".86", ls:"-.02em", tt:"uppercase" },
+  { key:"5", name:"Syne",                   fam:'"Syne",sans-serif',      vf:"normal", w:800, st:"normal",  size:"98px",  lh:".9",  ls:"-.035em", tt:"uppercase" },
+  { key:"6", name:"Bricolage Grotesque",    fam:'"Bricolage Grotesque",sans-serif', vf:'"opsz" 96,"wght" 800', w:800, st:"normal", size:"102px", lh:".88", ls:"-.035em", tt:"uppercase" },
+  { key:"7", name:"Sedgwick Ave · graffiti",fam:'"Sedgwick Ave Display",cursive', vf:"normal", w:400, st:"normal", size:"96px", lh:"1.02", ls:"0", tt:"none" },
+  { key:"8", name:"Rubik Wet Paint · drips",fam:'"Rubik Wet Paint",cursive', vf:"normal", w:400, st:"normal", size:"86px", lh:"1.05", ls:"0", tt:"uppercase" },
+  { key:"9", name:"Kablammo · morphing",    fam:'"Kablammo",cursive',     vf:'"MORF" 22', w:400, st:"normal", size:"94px", lh:".98", ls:"0", tt:"uppercase" }
+];
+
+/* the little label bottom-left, shared by the font and layout switches */
+let tagTimer;
+function flashTag(text){
+  const tag = document.getElementById("accentTag");
+  tag.textContent = text;
+  tag.classList.add("is-show");
+  clearTimeout(tagTimer);
+  tagTimer = setTimeout(() => tag.classList.remove("is-show"), 2400);
+}
+
+function applyFont(f){
+  const r = document.documentElement.style;
+  r.setProperty("--hero-family", f.fam);
+  r.setProperty("--hero-vf", f.vf);
+  r.setProperty("--hero-weight", f.w);
+  r.setProperty("--hero-style", f.st || "normal");
+  r.setProperty("--hero-size", f.size);
+  r.setProperty("--hero-lh", f.lh);
+  r.setProperty("--hero-ls", f.ls);
+  r.setProperty("--hero-tt", f.tt);
+
+  flashTag(f.key + " · " + f.name);
+
+  setTimeout(() => layoutHead(HEAD_MODES[headMode]), 60);
+}
+
+/* the title block is a plane citizen — keep its real box in sync with whatever
+   face is loaded, or scatter-avoidance and Fit all work off stale numbers */
+function measureTitle(){
+  const r = titleNode.getBoundingClientRect();
+  if(r.width && r.height){
+    TITLE_W = r.width  / view.scale;
+    TITLE_H = r.height / view.scale;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   KEYBOARD
+   ═══════════════════════════════════════════════════════ */
+
+document.addEventListener("keydown", ev => {
+  if(ev.key === "Escape"){
+    if(detailEl.classList.contains("is-open")) closeDetail();
+    else if(menuEl.classList.contains("is-open")) closeMenu();
+    else clearFlips();
+    return;
+  }
+  if(ev.target && ev.target.closest && ev.target.closest("input, textarea")) return;
+
+  const STEP = ev.shiftKey ? 320 : 110;
+  if(ev.key === "ArrowLeft"){  view.x += STEP; paintView(); ev.preventDefault(); }
+  if(ev.key === "ArrowRight"){ view.x -= STEP; paintView(); ev.preventDefault(); }
+  if(ev.key === "ArrowUp"){    view.y += STEP; paintView(); ev.preventDefault(); }
+  if(ev.key === "ArrowDown"){  view.y -= STEP; paintView(); ev.preventDefault(); }
+  if(ev.key === "0") recenter();
+  if(ev.key === "f" || ev.key === "F") fitAll();
+  if(ev.key === "t" || ev.key === "T") doTidy();
+  const pick = FONTS.find(f => f.key === ev.key);                    /* TEMP */
+  if(pick) applyFont(pick);
+  if(ev.key === "q" || ev.key === "Q"){
+    headMode = (headMode + 1) % HEAD_MODES.length;
+    const m = HEAD_MODES[headMode];
+    headNodes.forEach(el => el.style.transition = "transform .5s cubic-bezier(.2,.75,.2,1)");
+    titleNode.style.transition = "transform .5s cubic-bezier(.2,.75,.2,1)";
+    layoutHead(m);
+    setTimeout(() => {
+      headNodes.forEach(el => el.style.transition = "");
+      titleNode.style.transition = "";
+    }, 560);
+    flashTag("Q · headline: " + m);
+  }
+  if(ev.key === "=" || ev.key === "+") zoomAt(innerWidth / 2, innerHeight / 2, 1.34);
+  if(ev.key === "-" || ev.key === "_") zoomAt(innerWidth / 2, innerHeight / 2, 1 / 1.34);
+});
+
+document.addEventListener("pointerdown", ev => {
+  if(!menuEl.contains(ev.target)) closeMenu();
+}, true);
+
+/* ═══════════════════════════════════════════════════════
+   HINT
+   ═══════════════════════════════════════════════════════ */
+
+let hintGone = false;
+function dismissHint(){
+  if(hintGone) return;
+  hintGone = true;
+  hintEl.classList.add("is-gone");
+}
+setTimeout(dismissHint, 9000);
+
+/* ═══════════════════════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════════════════════ */
+
+const saved = loadLayout();
+
+if(saved){
+  layout = saved.layout;
+  if(saved.head){
+    saved.head.forEach((h, i) => {
+      headNodes[i].style.fontSize = (h.size || 132) + "px";
+      Object.assign(headNodes[i]._pos, h);
+    });
+    if(saved.title){ TITLE_POS.x = saved.title.x; TITLE_POS.y = saved.title.y; }
+    paintFree();
+    rebuildExclude();
+  }else{
+    applyHome();
+  }
+}else{
+  layout = homeLayout();
+  topZ = 50;
+  applyHome();
+}
+
+paintNodes();
+const v0 = homeView();
+view.x = v0.x; view.y = v0.y; view.scale = v0.scale;
+paintView();
+
+/* the Italic cut lands after first paint — remeasure so Scatter/Fit stay honest */
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(rebuildExclude);
+
+let resizeT;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeT);
+  resizeT = setTimeout(paintView, 120);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+[
+  {
+    "slug": "nothing-behind-the-practice",
+    "title": "Nothing Behind the Practice",
+    "lang": "en",
+    "date": "2026-05-21",
+    "kind": "Essay",
+    "dropFirstLine": true,
+    "was": "Wittgenstein Final Essay",
+    "pull": "What gives the sign life is the <span>role</span> it plays."
+  },
+  {
+    "slug": "coherence-not-truth",
+    "title": "Coherence, Not Truth",
+    "lang": "en",
+    "date": "2026-05-19",
+    "kind": "Essay",
+    "dropFirstLine": true,
+    "was": "Life a life final",
+    "pull": "We catch what's thrown at us and make <span>sculptures</span> out of it."
+  },
+  {
+    "slug": "legacy",
+    "title": "Legacy",
+    "lang": "zh",
+    "date": "2026-03-24",
+    "kind": "Notes",
+    "dropFirstLine": true,
+    "pull": "你在假设你死后存在的这个<span>世界</span>。"
+  },
+  {
+    "slug": "poetry-crucifix",
+    "title": "诗意把我钉在十字架上",
+    "lang": "zh",
+    "date": "2026-03-21",
+    "kind": "Note",
+    "dropFirstLine": false,
+    "pull": "充满诗意的时刻时常有一丝<span>苦涩</span>的底色。"
+  },
+  {
+    "slug": "sicily",
+    "title": "西西里岛的风景依旧",
+    "lang": "zh",
+    "date": "2025-04-06",
+    "kind": "Prose",
+    "dropFirstLine": false,
+    "pull": "如果非要用一个词来形容，那一定是 <span>melancholic</span>。"
+  },
+  {
+    "slug": "prose-1",
+    "title": "Prose 1",
+    "lang": "zh",
+    "date": "2025-01-19",
+    "kind": "Prose",
+    "dropFirstLine": true,
+    "pull": "loop 和我这两年都没什么<span>变化</span>。"
+  },
+  {
+    "slug": "critique-without-an-anchor",
+    "title": "Critique Without an Anchor",
+    "lang": "en",
+    "date": "2024-12-09",
+    "kind": "Essay",
+    "dropFirstLine": false,
+    "was": "Foucault;t",
+    "pull": "Critique is part and parcel of the <span>structures</span> it interrogates."
+  }
+]

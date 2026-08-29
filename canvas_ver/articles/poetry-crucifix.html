@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>诗意把我钉在十字架上 — Ruotian Wang</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#EFEEEA;
+  --ash:#DAD9D4;
+  --ink:#131519;
+  --ink-soft:#6E6F6A;
+  --rule:#C6C5BF;
+  --blue:#2320E8;
+
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Newsreader",Georgia,"Times New Roman",serif;
+  --cjk:"Newsreader","Songti SC","Noto Serif SC","Source Han Serif SC",serif;
+  --mono:"Space Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  --gutter:clamp(18px,4vw,56px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--page);
+  color:var(--ink);
+  font-family:var(--cjk);
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+
+.topbar{
+  display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+  padding:18px var(--gutter);
+  border-bottom:1px solid var(--rule);
+}
+.topbar__name{
+  font-family:var(--display);
+  font-variation-settings:"wdth" 118,"wght" 800;
+  font-size:14px;letter-spacing:.02em;text-transform:uppercase;
+  text-decoration:none;
+}
+.topbar a.back{text-decoration:none;color:var(--ink-soft)}
+.topbar a.back:hover{color:var(--blue)}
+
+.wrap{max-width:none;padding:0 var(--gutter)}
+header.piece{
+  padding:clamp(44px,8vw,96px) 0 clamp(26px,4vw,44px);
+  border-bottom:1px solid var(--rule);
+  margin-bottom:clamp(28px,4vw,52px);
+}
+.eyebrow{color:var(--ink-soft);margin-bottom:clamp(16px,2.4vw,26px)}
+h1{
+  margin:0;
+  font-family:var(--display);
+  font-variation-settings:"wdth" 112,"wght" 840;
+  font-size:clamp(32px,6.4vw,78px);
+  line-height:.92;
+  letter-spacing:-.02em;
+  text-transform:uppercase;
+  max-width:16ch;
+}
+.byline{margin-top:clamp(16px,2.2vw,24px);color:var(--ink-soft)}
+
+article{
+  max-width:40em;
+  font-size:clamp(16px,1.35vw,18px);
+  line-height:1.95;
+  padding-bottom:clamp(48px,7vw,96px);
+}
+article p{margin:0 0 1.15em}
+article p{text-align:justify;text-justify:inter-ideograph}
+.sec{
+  margin:2.4em 0 1.6em;
+  color:var(--ink-soft);
+  border-top:1px solid var(--rule);
+  padding-top:1.1em;
+  font-size:13px;
+  letter-spacing:.05em;
+}
+/* the first marker sits right under the header rule — one line is enough */
+article .sec:first-child{border-top:0;padding-top:0;margin:0 0 1.6em}
+
+footer{
+  border-top:1px solid var(--rule);
+  padding:18px var(--gutter) 40px;
+  display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  color:var(--ink-soft);
+}
+footer a{color:var(--blue);text-decoration:none;border-bottom:1px solid var(--blue);padding-bottom:2px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="topbar__name" href="../index.html">Ruotian Wang</a>
+  <a class="back mono" href="../index.html">← Catalog</a>
+</header>
+
+<div class="wrap">
+  <header class="piece">
+    <div class="eyebrow mono">Note · 2026</div>
+    <h1>诗意把我钉在十字架上</h1>
+    <div class="byline mono">March 21, 2026 · 159 characters</div>
+  </header>
+
+  <article>
+    <p>诗意把我钉上十字架。<br>我喜欢内省，时常观察自己的生活方式是否正确。我发现充满诗意的时刻时常有一丝苦涩的底色。我爱艺术，我爱天才的艺术家，可我总感觉他们活的是那么的痛苦。似乎敏锐的感知能力永远先感知苦难而非快乐。我已经很长一段时间没有认真听 Mac Miller的音乐了，他的声音现在听来总是那样的刺痛。在远离创作的这六个月里我好像终于找回一点重心，也许这才是正确的。</p>
+  </article>
+</div>
+
+<footer class="mono">
+  <span>© 2026 Ruotian Wang</span>
+  <a href="../index.html">Back to the catalog</a>
+</footer>
+
+</body>
+</html>

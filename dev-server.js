@@ -1,12 +1,14 @@
-// Local dev server for claude_ver/ — supports HTTP Range requests so
+// Local dev server for canvas_ver/ — supports HTTP Range requests so
 // <audio>/<video> can seek. Not for production.
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-const ROOT = path.join(__dirname, "claude_ver");
+const ROOT = path.join(__dirname, "canvas_ver");
 const PORT = Number(process.argv[2] || 8000);
-const INDEX = "ruotian-catalog.html";
+// bind all interfaces so a phone on the same Wi-Fi can reach it
+const HOST = process.argv[3] || "0.0.0.0";
+const INDEX = "index.html";
 
 const TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -54,4 +56,4 @@ http.createServer((req, res) => {
     if (req.method !== "HEAD") fs.createReadStream(file).pipe(res);
     else res.end();
   });
-}).listen(PORT, "127.0.0.1", () => console.log(`serving claude_ver/ on http://127.0.0.1:${PORT}`));
+}).listen(PORT, HOST, () => console.log(`serving canvas_ver/ on http://${HOST}:${PORT}`));
