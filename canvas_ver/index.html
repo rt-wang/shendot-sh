@@ -2831,7 +2831,14 @@ function openReader(url, push){
   /* when the frame already holds this page — Forward, or reopening the same
      article — no load event is coming, so name the tab here instead of waiting */
   syncTitle();
-  ejectDeck();          /* a video floating over an article is not wanted; music is */
+  /* A video floating over an article is not wanted, so it steps aside. Music is
+     — and the deck holds music too: every untitled project plays through an
+     audio-only embed in here rather than through the bar. Ejecting regardless
+     is what silenced a playing project on the way into an article, which only
+     showed up as the music being gone once you came back. */
+  const deckMedium = deckIndex > -1 ? ENTRIES[deckIndex].media : null;
+  if(deckMedium && deckMedium.type === "embed") dockDeck();
+  else ejectDeck();
 }
 
 function closeReader(){
