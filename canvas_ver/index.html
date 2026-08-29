@@ -601,12 +601,27 @@ button{font:inherit;color:inherit}
   width:min(430px,calc(100vw - 2 * var(--gutter)));
   display:none;align-items:center;gap:13px;
   padding:10px 12px 15px;
-  background:var(--panel);
-  border:1px solid var(--panel-line);
-  border-radius:14px;
-  box-shadow:0 22px 54px rgba(12,13,15,.5);
+  border-radius:16px;
   color:var(--panel-text);
   animation:deck-rise .3s cubic-bezier(.2,.75,.2,1);
+
+  /* glass: a dark tint thin enough to read the canvas through, blurred and
+     saturated so what shows through goes soft and colourful rather than busy.
+     the top edge catches a highlight, which is what sells it as a pane. */
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0) 46%),
+    rgba(22,23,27,.78);
+  backdrop-filter:blur(22px) saturate(185%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid rgba(255,255,255,.13);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.10),
+    0 18px 44px rgba(12,13,15,.36),
+    0 2px 8px rgba(12,13,15,.22);
+}
+/* without backdrop-filter the tint alone would be a smear — go solid instead */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .bar{background:var(--panel);border-color:var(--panel-line)}
 }
 .bar.is-live{display:flex}
 .bar__transport{display:flex;align-items:center;gap:11px;flex:0 0 auto}
@@ -618,14 +633,15 @@ button{font:inherit;color:inherit}
 .bar__btn--step svg{width:20px;height:20px}
 .bar__btn--play svg{width:26px;height:26px}
 .bar__btn--loop svg{width:17px;height:17px}
-.bar__btn--loop{color:var(--panel-soft)}
+.bar__btn--loop{color:rgba(255,255,255,.55)}
 .bar__btn--loop[aria-pressed="true"]{color:var(--accent-lift)}
 .bar__btn:hover{color:#FFF}
 .bar__btn:focus-visible{outline:2px solid var(--accent-lift);outline-offset:3px}
 
 .bar__art{
   width:38px;height:38px;flex:0 0 auto;object-fit:cover;
-  border-radius:5px;background:#2A2B2F;
+  border-radius:6px;background:rgba(255,255,255,.08);
+  box-shadow:0 1px 3px rgba(12,13,15,.4);
 }
 .bar__id{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
 .bar__title{
@@ -634,30 +650,36 @@ button{font:inherit;color:inherit}
 }
 .bar__sub{
   font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
-  color:var(--panel-soft);
+  color:rgba(255,255,255,.66);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .bar__more{
   flex:0 0 auto;border:0;background:transparent;cursor:pointer;
-  color:var(--panel-soft);letter-spacing:.16em;font-size:15px;padding:4px 6px;
+  color:rgba(255,255,255,.6);letter-spacing:.16em;font-size:15px;padding:4px 6px;
 }
-.bar__more:hover{color:var(--panel-text)}
+.bar__more:hover{color:#FFF}
 
 /* the seek line sits on the bar's own bottom edge, like a hairline rule */
 .bar__seek{
   position:absolute;left:12px;right:12px;bottom:7px;height:3px;
-  background:var(--panel-line);border-radius:2px;overflow:hidden;cursor:pointer;
+  background:rgba(255,255,255,.16);border-radius:2px;overflow:hidden;cursor:pointer;
 }
 /* the line is 3px but the grab area is not */
 .bar__seek::before{content:"";position:absolute;left:0;right:0;top:-7px;height:14px}
-.bar__seek i{display:block;height:100%;width:0;background:var(--panel-soft)}
+.bar__seek i{display:block;height:100%;width:0;background:rgba(255,255,255,.72)}
 .bar__seek:hover i{background:var(--accent-lift)}
 
 .bar__menu{
-  position:absolute;right:14px;bottom:calc(100% + 8px);
+  position:absolute;right:12px;bottom:calc(100% + 9px);
   min-width:196px;
-  background:var(--panel);border:1px solid var(--panel-line);
-  box-shadow:0 18px 40px rgba(12,13,15,.5);
+  border-radius:12px;overflow:hidden;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0) 46%),
+    rgba(24,25,29,.78);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid rgba(255,255,255,.13);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 16px 38px rgba(12,13,15,.4);
   display:none;flex-direction:column;
 }
 .bar__menu.is-open{display:flex}
@@ -666,7 +688,7 @@ button{font:inherit;color:inherit}
   padding:11px 14px;color:var(--panel-soft);
   font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
 }
-.bar__menu button:hover,.bar__menu a:hover{background:#212227;color:var(--panel-text)}
+.bar__menu button:hover,.bar__menu a:hover{background:rgba(255,255,255,.09);color:var(--panel-text)}
 
 @media(max-width:720px){
   .bar{left:12px;right:12px;width:auto;gap:11px;padding:9px 10px 14px}
