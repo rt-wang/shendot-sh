@@ -18,11 +18,14 @@
   --blue:#2320E8;
   --blue-deep:#1512A0;
 
-  /* dark surface for the listening station — sits under the embed's own card */
-  --panel:#17181B;
-  --panel-line:#2E3035;
+  /* dark surface for the listening station.
+     --panel is sampled from the untitled.stream player card itself (#191919);
+     matching it exactly is what makes the embed's 24px corners disappear.
+     If they ever restyle the player, re-sample or the corners will show. */
+  --panel:#191919;
+  --panel-line:#2C2C2C;
   --panel-text:#E8E7E3;
-  --panel-soft:#95958F;
+  --panel-soft:#8F8F8F;
   --blue-lift:#7C7AFF;
 
   --display:"Archivo","Helvetica Neue",Arial,sans-serif;
@@ -445,7 +448,7 @@ body.is-locked{overflow:hidden}
 .station__media audio{display:block;width:100%}
 
 .station__label{margin:20px 0 0;color:var(--panel-soft)}
-.station__body{margin:0;font-size:clamp(14px,1.2vw,16px);line-height:1.45;color:#C9C8C3}
+.station__body{margin:0;font-size:clamp(14px,1.2vw,16px);line-height:1.45;color:#C8C8C6}
 
 /* liner rows inherit the light-paper palette — repaint them for the dark panel */
 .station__panel .liner__rows{border-top-color:var(--panel-line);color:var(--panel-soft)}
@@ -591,20 +594,47 @@ const ENTRIES = [
    rows:[["Role","Subject, editor"],["Runtime","6:35"],["Host","Self-hosted HLS"]],
    cta:"Watch", href:"#", tc:"00:06:35"},
 
-  {no:"D01", cat:"writing", title:"Reading Features, Not Weights", year:"2026", format:"Essay · 2,400 words",
-   blurb:"On why mechanistic interpretability keeps finding structure where the architecture promised none.",
-   rows:[["Format","Markdown"],["Length","2,400 words"],["Topic","Interpretability"]],
-   cta:"Read", href:"#", pull:"A feature is not a <span>place</span> in the network. It is a direction."},
+  {no:"D01", cat:"writing", kind:"Notes", title:"Legacy", year:"2026", format:"Notes · 637 characters",
+   blurb:"Legacy assumes a world that outlives you and a third party to score it. On synchronic and diachronic ways of judging a life — and why narrative has no ground under it.",
+   rows:[["Language","中文"],["Length","637 characters"],["Written","2026-08-28"]],
+   cta:"Read", href:"articles/legacy.html",
+   pull:"你在假设你死后存在的这个<span>世界</span>。"},
 
-  {no:"D02", cat:"writing", title:"What Language Models Mean", year:"2026", format:"Essay · 3,100 words",
-   blurb:"Reference, use, and the old philosophy-of-language questions that got a new laboratory.",
-   rows:[["Format","Markdown"],["Length","3,100 words"],["Topic","Philosophy"]],
-   cta:"Read", href:"#", pull:"Meaning was never <span>inside</span> the word. Why expect it inside the vector?"},
+  {no:"D02", cat:"writing", kind:"Essay", title:"Nothing Behind the Practice", year:"2026", format:"Essay · 820 words",
+   blurb:"A defense of Wittgenstein's use account against its strongest challenge: that two speakers could share every use of a word and still differ inside.",
+   rows:[["Language","English"],["Length","820 words"],["Written","2026-05-21"]],
+   cta:"Read", href:"articles/nothing-behind-the-practice.html",
+   pull:"What gives the sign life is the <span>role</span> it plays."},
 
-  {no:"D03", cat:"writing", title:"Notes on Training Infra", year:"2025", format:"Notes · ongoing",
-   blurb:"Running notes on schedulers, checkpoints, and where throughput actually goes.",
-   rows:[["Format","Markdown"],["Length","Ongoing"],["Topic","ML infra"]],
-   cta:"Read", href:"#", pull:"Most of a training run is <span>waiting</span>, correctly."},
+  {no:"D03", cat:"writing", kind:"Essay", title:"Coherence, Not Truth", year:"2026", format:"Essay · 1,202 words",
+   blurb:"The meaning of life as a coherent system that anchors action, not a goal to reach. Agency lives in the constructing, not in the moment of choice.",
+   rows:[["Language","English"],["Length","1,202 words"],["Written","2026-05-19"]],
+   cta:"Read", href:"articles/coherence-not-truth.html",
+   pull:"We catch what's thrown at us and make <span>sculptures</span> out of it."},
+
+  {no:"D04", cat:"writing", kind:"Note", title:"诗意把我钉在十字架上", year:"2026", format:"Note · 159 characters",
+   blurb:"Poetic moments arrive with a bitter undertone. On perception that finds suffering before it finds joy.",
+   rows:[["Language","中文"],["Length","159 characters"],["Written","2026-03-21"]],
+   cta:"Read", href:"articles/poetry-crucifix.html",
+   pull:"充满诗意的时刻时常有一丝<span>苦涩</span>的底色。"},
+
+  {no:"D05", cat:"writing", kind:"Prose", title:"西西里岛的风景依旧", year:"2025", format:"Prose · 5,687 characters",
+   blurb:"Three sections from Sicily: the coast road after class, the hill route home, and the five minutes that still lead to someone else's door.",
+   rows:[["Language","中文"],["Length","5,687 characters"],["Written","2025-04-12"]],
+   cta:"Read", href:"articles/sicily.html",
+   pull:"如果非要用一个词来形容，那一定是 <span>melancholic</span>。"},
+
+  {no:"D06", cat:"writing", kind:"Prose", title:"Prose 1", year:"2025", format:"Prose · 369 characters",
+   blurb:"Last train home, the greasy end of an office day, a two-minute walk in below-freezing wind. Breaks off mid-sentence.",
+   rows:[["Language","中文"],["Length","369 characters"],["Written","2025-01-19"]],
+   cta:"Read", href:"articles/prose-1.html",
+   pull:"loop 和我这两年都没什么<span>变化</span>。"},
+
+  {no:"D07", cat:"writing", kind:"Essay", title:"Critique Without an Anchor", year:"2024", format:"Essay · 2,369 words",
+   blurb:"Fraser says Foucault needs a normative framework to justify his rejection of modernity. A defense: the missing anchor is the critique, not a hole in it.",
+   rows:[["Language","English"],["Length","2,369 words"],["Written","2024-12-11"]],
+   cta:"Read", href:"articles/critique-without-an-anchor.html",
+   pull:"Critique is part and parcel of the <span>structures</span> it interrogates."},
 
   {no:"E01", cat:"post", title:"Thread: Why LLMs Can't Jump", year:"2026", format:"Thread · 11 posts",
    blurb:"A long reply to the embodiment argument, and where I think it smuggles in its conclusion.",
@@ -638,9 +668,10 @@ function coverArt(e){
 }
 
 function ctaHTML(e,i){
-  return e.media
-    ? `<button class="liner__cta" data-open="${i}">${e.cta} →</button>`
-    : `<a class="liner__cta" href="${e.href}" target="_blank" rel="noopener">${e.cta} →</a>`;
+  if(e.media) return `<button class="liner__cta" data-open="${i}">${e.cta} →</button>`;
+  // articles are hosted here, so they stay in the same tab; everything else leaves
+  const away = /^https?:/.test(e.href);
+  return `<a class="liner__cta" href="${e.href}"${away ? ` target="_blank" rel="noopener"` : ""}>${e.cta} →</a>`;
 }
 
 function sleeveHTML(e,i){
@@ -655,7 +686,7 @@ function sleeveHTML(e,i){
           ${coverArt(e)}
           <div>
             <h3 class="cover__title">${e.title}</h3>
-            <div class="cover__foot">${e.cat === "video" ? e.tc : CAT_NAME[e.cat]}</div>
+            <div class="cover__foot">${e.cat === "video" ? e.tc : (e.kind || CAT_NAME[e.cat])}</div>
           </div>
         </div>
         <div class="face face--back">

@@ -127,6 +127,14 @@ function padIndex(index) {
   return String(index + 1).padStart(2, "0");
 }
 
+function getCategoryCount(categoryId) {
+  if (categoryId === "all") {
+    return workItems.length;
+  }
+
+  return workItems.filter((item) => item.category === categoryId).length;
+}
+
 function setFeaturedByIndex(index) {
   activeFeatureIndex = (index + featuredItems.length) % featuredItems.length;
   const item = featuredItems[activeFeatureIndex];
@@ -163,7 +171,10 @@ function renderFilters() {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "genre-button";
-    button.textContent = category.label;
+    button.innerHTML = `
+      <span>${category.label}</span>
+      <span>[${getCategoryCount(category.id)}]</span>
+    `;
     button.setAttribute("aria-pressed", String(activeFilter === category.id));
     button.addEventListener("click", () => {
       if (category.id !== "all") {
