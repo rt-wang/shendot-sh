@@ -793,16 +793,42 @@ button{font:inherit;color:inherit}
 .deck--docked:hover .deck__bar,
 .deck--docked:focus-within .deck__bar{opacity:1}
 .deck--docked .deck__btn{
-  width:26px;height:26px;padding:0;border-radius:50%;
+  width:26px;height:26px;padding:0;
   display:grid;place-items:center;
-  font-size:11px;line-height:1;
-  color:#FFF;
-  border:1px solid rgba(255,255,255,.38);
-  background:rgba(12,13,15,.55);
-  backdrop-filter:blur(6px);
-  -webkit-backdrop-filter:blur(6px);
+  font-size:14px;line-height:1;
+  color:#FFF;border:0;background:none;
+  text-shadow:0 1px 4px rgba(0,0,0,.55);
+  transition:transform .14s ease,opacity .14s ease;
+  opacity:.85;
 }
-.deck--docked .deck__btn:hover{background:rgba(12,13,15,.8);border-color:#FFF;color:#FFF}
+.deck--docked .deck__btn:hover{opacity:1;transform:scale(1.14)}
+
+/* Instead of a button sitting on a plate: bands along the top and bottom edges
+   that desaturate and darken the frame behind them on hover, with the x living
+   in the top one. Masked so they melt into the picture rather than ending on a
+   line. */
+.deck__scrim{display:none}
+.deck--docked .deck__scrim{
+  display:block;
+  position:absolute;left:0;right:0;z-index:1;pointer-events:none;
+  opacity:0;transition:opacity .2s ease;
+  backdrop-filter:grayscale(1) brightness(.6);
+  -webkit-backdrop-filter:grayscale(1) brightness(.6);
+}
+.deck--docked .deck__scrim--top{
+  top:0;height:46px;border-radius:12px 12px 0 0;
+  background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,0));
+  -webkit-mask-image:linear-gradient(180deg,#000 52%,transparent);
+  mask-image:linear-gradient(180deg,#000 52%,transparent);
+}
+.deck--docked .deck__scrim--bot{
+  bottom:0;height:34px;border-radius:0 0 12px 12px;
+  background:linear-gradient(0deg,rgba(0,0,0,.3),rgba(0,0,0,0));
+  -webkit-mask-image:linear-gradient(0deg,#000 46%,transparent);
+  mask-image:linear-gradient(0deg,#000 46%,transparent);
+}
+.deck--docked:hover .deck__scrim,
+.deck--docked:focus-within .deck__scrim{opacity:1}
 /* the player shows what is playing, so this is for screen readers only */
 .deck__now{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .deck__btn{
@@ -924,6 +950,8 @@ button{font:inherit;color:inherit}
     <button class="deck__btn" data-deck="eject" title="Close" aria-label="Close">&#10005;</button>
   </div>
   <div class="deck__media"></div>
+  <div class="deck__scrim deck__scrim--top"></div>
+  <div class="deck__scrim deck__scrim--bot"></div>
 </div>
 
 <script async src="https://platform.x.com/widgets.js" charset="utf-8"></script>
