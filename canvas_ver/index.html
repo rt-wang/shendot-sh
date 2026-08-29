@@ -2728,6 +2728,9 @@ const readerEl      = document.getElementById("reader");
 const readerFrame   = document.getElementById("readerFrame");
 const CATALOG_TITLE = document.title;
 let readerOpen = false;
+/* how many reader entries deep we are, so "Catalog" can be one jump rather than
+   a series of steps back through every article visited on the way */
+let readerDepth = 0;
 
 const ARTICLE_URL = /\/articles\/[^\/]+\.html$/;
 const CATALOG_URL = /(^|\/)index\.html$|\/$/;
@@ -2752,16 +2755,29 @@ function frameTo(url){
   if(framedUrl && w) w.location.replace(url);
   else readerFrame.setAttribute("src", url);
   framedUrl = url;
+  armFrame();
 }
 
-/* the tab is named by whatever is on screen */
+/* "Catalog" means the catalog, not "one step back": from the second article in
+   a chain a single back() only reaches the first, which reads as the button
+   being broken. Jump the whole depth in one go. */
+function toCatalog(){
+  if(readerDepth > 0) history.go(-readerDepth); else closeReader();
+}
+
+/* The tab is named by whatever is on screen. Mid-navigation the frame still
+   reports the PREVIOUS article's title, so only trust it once the document
+   showing is actually the one we asked for. */
 function syncTitle(){
-  const d = readerOpen ? readerFrame.contentDocument : null;
-  document.title = (d && d.title) || CATALOG_TITLE;
+  let d = null;
+  try{ d = readerOpen ? readerFrame.contentDocument : null; }catch(_){}
+  const settled = d && d.location && framedUrl &&
+                  d.location.pathname === new URL(framedUrl, location.origin).pathname;
+  document.title = (settled && d.title) || CATALOG_TITLE;
 }
 
 function openReader(url, push){
-  if(push) history.pushState({ reader: url }, "", url);
+  if(push) history.pushState({ reader: url, depth: ++readerDepth }, "", url);
   if(framedUrl !== url) frameTo(url);
   readerEl.classList.add("is-open");
   readerOpen = true;
@@ -2782,27 +2798,29 @@ function closeReader(){
 
 /* The framed page is same-origin, so its own links can be kept honest: its
    "← Catalog" returns to the canvas we are still holding rather than loading a
-   second copy of it inside the frame. */
-readerFrame.addEventListener("load", () => {
-  /* a frame that finishes loading after we already closed must not retitle the
-     tab — closing and reopening quickly otherwise leaves the article's name
-     sitting above the catalog. */
-  if(!readerOpen) return;
+   second copy of it inside the frame. Wiring is per-document and idempotent. */
+function wireFrame(){
   let d = null;
-  try{ d = readerFrame.contentDocument; }catch(_){ return; }
-  if(!d) return;
+  try{ d = readerFrame.contentDocument; }catch(_){ return false; }
+  if(!d || d.__readerWired) return false;
+  if(!d.location || d.location.href === "about:blank") return false;
+  d.__readerWired = true;
 
   syncTitle();
 
-  d.querySelectorAll("a[href]").forEach(a => {
-    const u = new URL(a.getAttribute("href"), d.baseURI);
-    if(u.origin !== location.origin){ a.target = "_blank"; a.rel = "noopener"; }
-  });
-
   d.addEventListener("click", ev => {
-    const u = readable(ev.target.closest && ev.target.closest("a[href]"), ev);
+    const a = ev.target.closest && ev.target.closest("a[href]");
+    if(!a) return;
+    /* An outside link has to leave the frame instead of replacing the article
+       inside it. Setting target here works because the default action reads it
+       after the listeners have run. */
+    if(new URL(a.getAttribute("href"), d.baseURI).origin !== location.origin){
+      a.target = "_blank"; a.rel = "noopener";
+      return;
+    }
+    const u = readable(a, ev);
     if(!u) return;
-    if(CATALOG_URL.test(u.pathname)){ ev.preventDefault(); history.back(); }
+    if(CATALOG_URL.test(u.pathname)){ ev.preventDefault(); toCatalog(); }
     else if(ARTICLE_URL.test(u.pathname)){            /* article → article */
       ev.preventDefault();
       openReader(u.pathname + u.search + u.hash, true);
@@ -2810,8 +2828,28 @@ readerFrame.addEventListener("load", () => {
   });
 
   /* Esc still closes, even though the keystroke lands inside the frame. */
-  d.addEventListener("keydown", ev => { if(ev.key === "Escape") history.back(); });
-});
+  d.addEventListener("keydown", ev => { if(ev.key === "Escape") toCatalog(); });
+  /* <title> lands during the parse, after we wire — pick it up when it does */
+  d.addEventListener("readystatechange", syncTitle);
+  return true;
+}
+
+/* An article is on screen and clickable well before the frame fires `load`,
+   because `load` waits on the webfonts. Wiring on `load` therefore left a gap —
+   short with a warm cache, seconds without one — in which a "← Catalog" click
+   escaped the guard above and navigated the FRAME to the catalog, nesting a
+   whole second copy of the canvas inside the reader. So arm as soon as the new
+   document exists. The old document is already flagged, so the poll keeps
+   going until the new one actually appears. */
+function armFrame(){
+  let tries = 0;
+  (function poll(){
+    if(wireFrame() || ++tries > 600) return;
+    requestAnimationFrame(poll);
+  })();
+}
+
+readerFrame.addEventListener("load", () => { wireFrame(); if(readerOpen) syncTitle(); });
 
 /* every article link, wherever it is drawn — the detail CTA today, a blog index
    tomorrow — opens here instead of navigating. */
@@ -2824,6 +2862,7 @@ document.addEventListener("click", ev => {
 
 window.addEventListener("popstate", ev => {
   const url = ev.state && ev.state.reader;
+  readerDepth = (ev.state && ev.state.depth) || 0;
   if(url) openReader(url, false); else closeReader();
 });
 
@@ -2834,7 +2873,7 @@ window.addEventListener("popstate", ev => {
 document.addEventListener("keydown", ev => {
   /* while reading, the canvas shortcuts are not the reader's to steal */
   if(readerOpen){
-    if(ev.key === "Escape") history.back();
+    if(ev.key === "Escape") toCatalog();
     return;
   }
   if(ev.key === "Escape"){
