@@ -2759,7 +2759,7 @@ function measureTitle(){
    document, and the <audio> inside it, stay alive. */
 
 const readerEl      = document.getElementById("reader");
-const readerFrame   = document.getElementById("readerFrame");
+let   readerFrame   = document.getElementById("readerFrame");
 const CATALOG_TITLE = document.title;
 let readerOpen = false;
 /* how many reader entries deep we are, so "Catalog" can be one jump rather than
@@ -2785,9 +2785,22 @@ function readable(a, ev){
    would make Back need two presses to leave an article. replace() does not. */
 let framedUrl = null;
 function frameTo(url){
-  const w = readerFrame.contentWindow;
-  if(framedUrl && w) w.location.replace(url);
-  else readerFrame.setAttribute("src", url);
+  /* A brand new frame each time, rather than navigating one long-lived iframe.
+     Navigating one entangles it with the joint session history twice over:
+     assigning .src pushes an entry of its own — which is why the first trip
+     back used to land on the entry where the frame was still about:blank — and
+     going back then makes the browser restore whatever document that entry
+     remembered, stranding the reader on the previously read article while the
+     address bar showed the new one. A newly created browsing context's first
+     load is a replacement, and it remembers nothing. */
+  const f = document.createElement("iframe");
+  f.className = "reader__frame";
+  f.id = "readerFrame";
+  f.title = "Article";
+  f.addEventListener("load", onFrameLoad);
+  f.src = url;
+  readerEl.replaceChildren(f);
+  readerFrame = f;
   framedUrl = url;
   armFrame();
 }
@@ -2893,7 +2906,8 @@ function armFrame(){
       const d = readerFrame.contentDocument;
       settled = !!d && !!d.__readerWired && d.readyState === "complete";
     }catch(_){}
-    if(settled || ++tries > 600) return;
+    if(settled){ syncTitle(); return; }   /* not only when the load event is caught */
+    if(++tries > 600) return;
     requestAnimationFrame(poll);
   })();
 }
@@ -2911,7 +2925,8 @@ window.addEventListener("message", ev => {
   else if(ARTICLE_URL.test(u.pathname)) openReader(u.pathname + u.search + u.hash, true);
 });
 
-readerFrame.addEventListener("load", () => { wireFrame(); if(readerOpen) syncTitle(); });
+function onFrameLoad(){ wireFrame(); if(readerOpen) syncTitle(); }
+readerFrame.addEventListener("load", onFrameLoad);
 
 /* every article link, wherever it is drawn — the detail CTA today, a blog index
    tomorrow — opens here instead of navigating. */
