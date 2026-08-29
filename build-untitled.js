@@ -22,15 +22,17 @@ async function project(id) {
   const m = html.match(/window\.__remixContext\s*=\s*(\{[\s\S]*?\});\s*<\/script>/);
   if (!m) throw new Error(`${id}: no remix payload — the embed page changed shape`);
 
-  const node = JSON.parse(m[1]).state.loaderData["routes/library.project.$projectSlug"];
-  if (!node) throw new Error(`${id}: not a project embed`);
+  const route = JSON.parse(m[1]).state.loaderData["routes/library.project.$projectSlug"];
+  // the route's `project` is a wrapper: { project: {...the record...}, tracks: [...] }
+  const wrap = route && route.project;
+  if (!wrap) throw new Error(`${id}: not a project embed`);
 
-  const tracks = (node.tracks || [])
+  const tracks = (wrap.tracks || [])
     .filter(t => t.audio_fallback_url)
     .map(t => ({ t: t.title, d: Math.round(t.duration || 0), src: t.audio_fallback_url }));
 
   if (!tracks.length) throw new Error(`${id}: no playable tracks`);
-  return { title: node.project?.project?.title || "", tracks };
+  return { title: (wrap.project && wrap.project.title) || "", tracks };
 }
 
 (async () => {
