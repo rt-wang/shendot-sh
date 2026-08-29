@@ -1626,7 +1626,11 @@ function mastheadBox(){
     minX = Math.min(minX, x);      minY = Math.min(minY, y);
     maxX = Math.max(maxX, x + w);  maxY = Math.max(maxY, y + h);
   };
-  EXCLUDE.forEach(r => eat(r.x, r.y, r.w, r.h));
+  /* Only the headline words. The intro block sits below and to the left of
+     them, and counting it here dragged the centroid down-left — which put the
+     headline itself off-centre on the opening view. Measured live rather than
+     from EXCLUDE so this never depends on when EXCLUDE was last rebuilt. */
+  headNodes.forEach(el => eat(el._pos.x, el._pos.y, el.offsetWidth, el.offsetHeight));
   if(!isFinite(minX)) eat(TITLE_POS.x, TITLE_POS.y, TITLE_W, TITLE_H);
   return { cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
 }
@@ -2732,12 +2736,25 @@ if(saved){
 }
 
 paintNodes();
-const v0 = homeView();
-view.x = v0.x; view.y = v0.y; view.scale = v0.scale;
-paintView();
 
-/* the Italic cut lands after first paint — remeasure so Scatter/Fit stay honest */
-if(document.fonts && document.fonts.ready) document.fonts.ready.then(rebuildExclude);
+function applyHomeView(){
+  const v = homeView();
+  view.x = v.x; view.y = v.y; view.scale = v.scale;
+  paintView();
+}
+applyHomeView();
+
+/* The display faces land after first paint and change how wide the headline
+   measures, so the opening view above was centred on fallback metrics.
+   Remeasure, then re-derive home — but leave it alone if the visitor has
+   already panned, zoomed or dragged in the meantime. */
+if(document.fonts && document.fonts.ready){
+  const v0 = { x: view.x, y: view.y, scale: view.scale };
+  document.fonts.ready.then(() => {
+    rebuildExclude();
+    if(view.x === v0.x && view.y === v0.y && view.scale === v0.scale) applyHomeView();
+  });
+}
 
 let resizeT;
 window.addEventListener("resize", () => {
