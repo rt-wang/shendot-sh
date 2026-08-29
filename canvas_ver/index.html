@@ -595,16 +595,21 @@ button{font:inherit;color:inherit}
    styled nor controlled. the <audio> lives in the bar and the bar never unmounts, so
    sound carries across panning, filtering and every sheet you open. */
 .bar{
-  position:fixed;left:0;right:0;bottom:var(--rail-h,48px);z-index:75;
-  display:none;align-items:center;gap:16px;
-  padding:11px 18px 13px;
+  position:fixed;
+  right:var(--gutter);bottom:calc(var(--rail-h,48px) + 16px);
+  z-index:75;
+  width:min(430px,calc(100vw - 2 * var(--gutter)));
+  display:none;align-items:center;gap:13px;
+  padding:10px 12px 15px;
   background:var(--panel);
-  border-top:1px solid var(--panel-line);
+  border:1px solid var(--panel-line);
+  border-radius:14px;
+  box-shadow:0 22px 54px rgba(12,13,15,.5);
   color:var(--panel-text);
   animation:deck-rise .3s cubic-bezier(.2,.75,.2,1);
 }
 .bar.is-live{display:flex}
-.bar__transport{display:flex;align-items:center;gap:14px;flex:0 0 auto}
+.bar__transport{display:flex;align-items:center;gap:11px;flex:0 0 auto}
 .bar__btn{
   border:0;background:transparent;cursor:pointer;color:var(--panel-text);
   padding:2px;line-height:0;
@@ -640,9 +645,10 @@ button{font:inherit;color:inherit}
 
 /* the seek line sits on the bar's own bottom edge, like a hairline rule */
 .bar__seek{
-  position:absolute;left:0;right:0;bottom:0;height:3px;
-  background:var(--panel-line);cursor:pointer;
+  position:absolute;left:12px;right:12px;bottom:7px;height:3px;
+  background:var(--panel-line);border-radius:2px;overflow:hidden;cursor:pointer;
 }
+/* the line is 3px but the grab area is not */
 .bar__seek::before{content:"";position:absolute;left:0;right:0;top:-7px;height:14px}
 .bar__seek i{display:block;height:100%;width:0;background:var(--panel-soft)}
 .bar__seek:hover i{background:var(--accent-lift)}
@@ -663,8 +669,8 @@ button{font:inherit;color:inherit}
 .bar__menu button:hover,.bar__menu a:hover{background:#212227;color:var(--panel-text)}
 
 @media(max-width:720px){
-  .bar{gap:12px;padding:9px 12px 11px}
-  .bar__transport{gap:10px}
+  .bar{left:12px;right:12px;width:auto;gap:11px;padding:9px 10px 14px}
+  .bar__transport{gap:9px}
   .bar__sub{display:none}
 }
 
@@ -706,8 +712,9 @@ button{font:inherit;color:inherit}
   color:var(--panel-soft);
 }
 .deck__btn:hover{border-color:var(--panel-soft);color:var(--panel-text)}
-/* the sheet owns the right side — when it is open, the bar steps out of its way */
-.detail.is-open ~ .deck.deck--docked{right:auto;left:var(--gutter)}
+/* the sheet owns the right side — when it is open, both step out of its way */
+.detail.is-open ~ .deck.deck--docked,
+.detail.is-open ~ .bar{right:auto;left:var(--gutter)}
 @keyframes deck-rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 
 @media(max-width:720px){
