@@ -516,11 +516,22 @@ button{font:inherit;color:inherit}
 .detail__blurb{margin:24px 0 0;font-size:19px;line-height:1.42;max-width:52ch;color:var(--panel-text)}
 .detail__alt{margin:10px 0 0;font-size:15px;line-height:1.4;color:var(--panel-soft);max-width:52ch}
 
-/* no wrapper chrome — the embed brings its own card, let it meet the sheet directly */
-.detail__media{margin:28px 0 0}
-.detail__media iframe,.detail__media video{display:block;width:100%;border:0;background:transparent}
-.detail__media iframe.yt{aspect-ratio:16/9;height:auto;background:#000}
-.detail__media video{border:1px solid var(--panel-line)}
+/* no wrapper chrome — the embed brings its own card, let it meet the sheet directly.
+   the player itself lives in #deck, which parks over this reserved box; the slot only
+   holds the space so the sheet's rhythm is unchanged. */
+.detail__slot{margin:28px 0 0}
+.detail__slot--ratio{aspect-ratio:16/9}
+
+/* shown instead of a player when the deck is busy with another record */
+.detail__takeover{
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:20px;text-align:center;
+  border:1px dashed var(--panel-line);background:transparent;cursor:pointer;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--panel-soft);
+}
+.detail__takeover:hover{border-color:var(--panel-soft);color:var(--panel-text)}
 
 .detail__rows{
   margin:28px 0 0;border-top:1px solid var(--panel-line);
@@ -551,6 +562,57 @@ button{font:inherit;color:inherit}
 .detail__cta:hover{background:var(--accent-deep)}
 /* nothing to link to yet — a ghost, not a faded button */
 .detail__cta--soon{background:transparent;border:1px solid var(--panel-line);color:var(--panel-soft);cursor:default}
+
+/* ══════════════ the deck — the player that outlives the sheet ══════════════
+   it never changes parents: moving an iframe in the DOM reloads it and the sound cuts
+   out. it only repositions — parked over the sheet's slot, or docked in the corner. */
+.deck{position:fixed;z-index:80;display:none;box-sizing:border-box}
+.deck.is-live{display:block}
+.deck__media{overflow:hidden}
+.deck__media iframe,
+.deck__media video{display:block;width:100%;height:100%;border:0;background:transparent}
+.deck__media video{background:#000;outline:1px solid var(--panel-line);outline-offset:-1px}
+.deck__bar{display:none}
+
+/* docked: a now-playing row along the bottom. the embed is rendered wide and scaled
+   down to bar height, so its own transport keeps working at a fraction of the size. */
+.deck.deck--docked{   /* beats .deck.is-live{display:block} on specificity */
+  right:var(--gutter);bottom:64px;
+  width:min(500px,calc(100vw - 2 * var(--gutter)));
+  display:flex;align-items:center;gap:8px;
+  background:var(--panel);
+  border:1px solid var(--panel-line);
+  padding:8px;
+  box-shadow:0 22px 54px rgba(12,13,15,.5);
+  animation:deck-rise .32s cubic-bezier(.2,.75,.2,1);
+}
+.deck--docked .deck__media{flex:1 1 0;min-width:0}
+.deck--docked .deck__bar{
+  order:2;flex:0 0 auto;
+  display:flex;align-items:center;gap:6px;
+}
+/* the player shows what is playing, so this is for screen readers only */
+.deck__now{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.deck__btn{
+  flex:0 0 auto;
+  border:1px solid var(--panel-line);background:transparent;cursor:pointer;
+  padding:5px 9px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--panel-soft);
+}
+.deck__btn:hover{border-color:var(--panel-soft);color:var(--panel-text)}
+/* the sheet owns the right side — when it is open, the bar steps out of its way */
+.detail.is-open ~ .deck.deck--docked{right:auto;left:var(--gutter)}
+@keyframes deck-rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+@media(max-width:720px){
+  /* no room to shrink a wide row into on a phone: full width, buttons underneath */
+  .deck.deck--docked{
+    left:12px;right:12px;width:auto;bottom:60px;
+    flex-direction:column;align-items:stretch;
+  }
+  .deck--docked .deck__bar{justify-content:flex-end;padding-top:8px}
+}
 
 @media(max-width:720px){
   .titleblock{width:min(88vw,560px)}
@@ -615,6 +677,15 @@ button{font:inherit;color:inherit}
 
 <div class="detail" id="detail" role="dialog" aria-modal="true" aria-label="Entry detail">
   <div class="detail__sheet" id="detailSheet"></div>
+</div>
+
+<div class="deck" id="deck">
+  <div class="deck__bar">
+    <span class="deck__now"></span>
+    <button class="deck__btn" data-deck="open">Notes</button>
+    <button class="deck__btn" data-deck="eject">Stop &#10005;</button>
+  </div>
+  <div class="deck__media"></div>
 </div>
 
 <script async src="https://platform.x.com/widgets.js" charset="utf-8"></script>
@@ -1552,19 +1623,149 @@ menuEl.addEventListener("click", ev => {
    DETAIL PAGE
    ═══════════════════════════════════════════════════════ */
 
-function mediaHTML(e){
-  if(!e.media) return "";
-  if(e.media.type === "youtube"){
-    return '<div class="detail__media"><iframe class="yt" src="https://www.youtube.com/embed/' + e.media.id +
-           '" title="" loading="lazy" allowfullscreen ' +
-           'allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe></div>';
-  }
-  if(e.media.type === "embed"){
-    return '<div class="detail__media"><iframe src="' + e.media.src + '" height="' + e.media.height +
-           '" loading="lazy" allow="autoplay; clipboard-write; encrypted-media"></iframe></div>';
-  }
-  return '<div class="detail__media"><video src="' + e.media.src + '" controls preload="metadata" playsinline></video></div>';
+/* ── the deck ──────────────────────────────────────────
+   one player for the whole page. it is a child of <body> and never moves in the DOM,
+   because reparenting an iframe reloads it — the sound would stop. opening a record
+   parks it over the sheet's slot; closing the sheet sends it to the corner, still
+   playing, with its own stop button. */
+const deckEl    = document.getElementById("deck");
+const deckMedia = deckEl.querySelector(".deck__media");
+const deckNow   = deckEl.querySelector(".deck__now");
+let deckIndex   = -1;      // entry loaded in the deck, -1 when empty
+let deckEngaged = false;   // did the listener actually start it?
+
+function playerHTML(m){
+  if(m.type === "youtube")
+    return '<iframe class="yt" src="https://www.youtube.com/embed/' + m.id + '" title="" allowfullscreen ' +
+           'allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>';
+  if(m.type === "embed")
+    return '<iframe src="' + m.src + '" allow="autoplay; clipboard-write; encrypted-media"></iframe>';
+  return '<video src="' + m.src + '" controls preload="metadata" playsinline></video>';
 }
+
+// the untitled embed has one true height; everything else is 16:9
+function isRatio(m){ return m.type !== "embed"; }
+const EMBED_W = 900;   // internal width that keeps untitled's compact player on one row
+
+function loadDeck(i){
+  if(deckIndex === i) return;   // already loaded: leave it be, rebuilding would reload it
+  const e = ENTRIES[i];
+  deckIndex = i;
+  deckEngaged = false;
+  deckMedia.innerHTML = playerHTML(e.media);
+  deckNow.innerHTML = 'Playing · <b>' + e.title + '</b>';
+  const el = deckMedia.firstElementChild;
+  if(el.tagName === "VIDEO") el.addEventListener("play", () => { deckEngaged = true; });
+  deckEl.classList.add("is-live");
+}
+
+function parkDeck(){
+  deckEl.classList.remove("deck--docked");
+  deckEl.classList.add("deck--parked");
+  const el = deckMedia.firstElementChild;
+  if(el) el.style.cssText = "";   // undo the docked bar's downscale
+  // the sheet slides in over ~420ms — follow the slot until it settles, or the deck
+  // parks where the slot *was* and sits 28px off for the rest of the session
+  const until = performance.now() + 560;
+  (function follow(){
+    syncDeck();
+    if(performance.now() < until && deckEl.classList.contains("deck--parked"))
+      requestAnimationFrame(follow);
+  })();
+}
+
+// the deck is position:fixed, so parking it means copying the slot's rect every time
+// the sheet scrolls or the window resizes
+function syncDeck(){
+  if(!deckEl.classList.contains("deck--parked")) return;
+  const slot = document.getElementById("detailSlot");
+  if(!slot) return;
+  const r = slot.getBoundingClientRect();
+  const s = detailSheet.getBoundingClientRect();
+  deckEl.style.left  = r.left + "px";
+  deckEl.style.top   = r.top + "px";
+  deckEl.style.width = r.width + "px";
+  deckMedia.style.height = r.height + "px";
+  // nothing clips a fixed element, so clip it to the sheet by hand
+  const top = Math.max(0, s.top - r.top), bot = Math.max(0, r.bottom - s.bottom);
+  deckEl.style.clipPath = (top || bot) ? "inset(" + top + "px 0 " + bot + "px 0)" : "";
+}
+
+function dockDeck(){
+  if(deckIndex < 0) return;
+  const m = ENTRIES[deckIndex].media;
+  const el = deckMedia.firstElementChild;
+  deckEl.classList.remove("deck--parked");
+  deckEl.classList.add("deck--docked");
+  deckEl.style.left = deckEl.style.top = deckEl.style.width = deckEl.style.clipPath = "";
+  const w = deckMedia.clientWidth;   // measure after the flex layout resolves
+  if(m.type === "embed" && w >= 300){
+    // untitled's compact player only stays on one line in a wide box — under ~700px it
+    // stacks, and 192px then clips it to nothing. so render it wide and shrink it to bar
+    // height. css zoom, not transform: scale() — a scaled cross-origin iframe paints
+    // blank in Chrome, while zoom relays the content out and keeps its buttons live.
+    const k = w / EMBED_W;
+    el.style.cssText = "width:" + EMBED_W + "px;height:192px;zoom:" + k;
+    deckMedia.style.height = Math.round(192 * k) + "px";
+  }else if(m.type === "embed"){
+    // a phone has no room to shrink that row into — dock the stacked layout instead
+    el.style.cssText = "width:100%;height:300px";
+    deckMedia.style.height = "300px";
+  }else{
+    el.style.cssText = "";
+    deckMedia.style.height = Math.round(w * 9 / 16) + "px";
+  }
+}
+
+function ejectDeck(){
+  deckEl.classList.remove("is-live", "deck--parked", "deck--docked");
+  deckEl.style.left = deckEl.style.top = deckEl.style.width = deckEl.style.clipPath = "";
+  deckMedia.innerHTML = "";   // the only thing that actually stops the sound
+  deckIndex = -1;
+  deckEngaged = false;
+}
+
+deckEl.addEventListener("click", ev => {
+  const b = ev.target.closest("[data-deck]");
+  if(!b) return;
+  if(b.dataset.deck === "eject") ejectDeck();
+  else openDetail(deckIndex);
+});
+
+// a cross-origin player can't report that it started. clicking into one blurs the
+// window and leaves the iframe as the active element — that is the signal.
+window.addEventListener("blur", () => {
+  if(deckIndex > -1 && document.activeElement === deckMedia.firstElementChild) deckEngaged = true;
+});
+window.addEventListener("resize", () => {
+  syncDeck();
+  if(deckEl.classList.contains("deck--docked")) dockDeck();   // the bar's width moved
+});
+detailSheet.addEventListener("scroll", syncDeck);
+
+// the slot the deck parks over. if the deck is busy with something else, the sheet
+// offers to take it over rather than silently cutting the music off.
+function slotHTML(e, i){
+  if(!e.media) return "";
+  const busy = deckIndex > -1 && deckIndex !== i && deckEngaged;
+  const cls  = "detail__slot" + (isRatio(e.media) ? " detail__slot--ratio" : "");
+  const size = e.media.type === "embed" ? ' style="height:' + e.media.height + 'px"' : "";
+  return '<div class="' + cls + '" id="detailSlot"' + size + '>' +
+         (busy
+           ? '<button class="detail__takeover" data-takeover="' + i + '">Play — replaces ' +
+             ENTRIES[deckIndex].title + ' in the deck</button>'
+           : "") +
+         "</div>";
+}
+
+detailSheet.addEventListener("click", ev => {
+  const b = ev.target.closest("[data-takeover]");
+  if(!b) return;
+  const i = Number(b.dataset.takeover);
+  document.getElementById("detailSlot").innerHTML = "";
+  loadDeck(i);
+  parkDeck();
+});
 
 function openDetail(i){
   const e = ENTRIES[i];
@@ -1585,7 +1786,7 @@ function openDetail(i){
       ? '<div class="detail__tweet"><blockquote class="twitter-tweet" data-theme="dark" data-dnt="true">' +
         "<p>" + e.blurb + '</p><a href="' + e.tweetUrl + '"></a></blockquote></div>'
       : e.blurb ? '<p class="detail__blurb">' + e.blurb + "</p>" : "") +
-    mediaHTML(e) +
+    slotHTML(e, i) +
     '<div class="detail__rows">' + rows + "</div>" +
     tracks +
     (e.href && e.href !== "#"
@@ -1595,6 +1796,10 @@ function openDetail(i){
       : '<span class="detail__cta detail__cta--soon">' + e.cta + " — soon</span>");
 
   detailEl.classList.add("is-open");
+  // park the deck over the slot — unless it is busy playing something else, in which
+  // case the slot shows a takeover button and the docked player keeps going
+  if(e.media && !(deckIndex > -1 && deckIndex !== i && deckEngaged)){ loadDeck(i); parkDeck(); }
+  else if(deckEl.classList.contains("deck--parked")) dockDeck();
   // the sheet is rebuilt each time, so the widget has to be asked to render again
   if(e.tweetUrl && window.twttr && twttr.widgets) twttr.widgets.load(detailSheet);
   document.getElementById("detailClose").addEventListener("click", closeDetail);
@@ -1604,7 +1809,10 @@ function openDetail(i){
 
 function closeDetail(){
   detailEl.classList.remove("is-open");
-  detailSheet.innerHTML = "";   // stops any playing embed
+  detailSheet.innerHTML = "";   // notes only — the player is not in here
+  // whatever was started keeps playing, docked in the corner; an untouched player
+  // has nothing to keep, so it goes
+  if(deckEngaged) dockDeck(); else ejectDeck();
 }
 
 detailEl.addEventListener("pointerdown", ev => {
